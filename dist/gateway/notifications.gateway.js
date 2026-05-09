@@ -14,10 +14,15 @@ exports.NotificationsGateway = void 0;
 const common_1 = require("@nestjs/common");
 const websockets_1 = require("@nestjs/websockets");
 const socket_io_1 = require("socket.io");
+const users_service_1 = require("../users/users.service");
 let NotificationsGateway = NotificationsGateway_1 = class NotificationsGateway {
+    usersService;
     server;
     logger = new common_1.Logger(NotificationsGateway_1.name);
     userSocketMap = new Map();
+    constructor(usersService) {
+        this.usersService = usersService;
+    }
     handleConnection(client) {
         const userId = client.handshake.query.userId;
         if (!userId) {
@@ -41,14 +46,23 @@ let NotificationsGateway = NotificationsGateway_1 = class NotificationsGateway {
             this.logger.log(`[Gateway] User ${disconnectedUserId} disconnected`);
         }
     }
-    notifyTaskAssigned(userId, task) {
-        this.server.to(userId).emit('task-assigned', task);
+    async notifyTaskAssigned(userId, task) {
+        const user = await this.usersService.findById(userId);
+        if (user?.notificationPreferences?.taskAssigned !== false) {
+            this.server.to(userId).emit('task-assigned', task);
+        }
     }
-    notifyTaskUpdated(userId, task) {
-        this.server.to(userId).emit('task-updated', task);
+    async notifyTaskUpdated(userId, task) {
+        const user = await this.usersService.findById(userId);
+        if (user?.notificationPreferences?.taskUpdated !== false) {
+            this.server.to(userId).emit('task-updated', task);
+        }
     }
-    notifyDeadlineReminder(userId, task) {
-        this.server.to(userId).emit('deadline-reminder', task);
+    async notifyDeadlineReminder(userId, task) {
+        const user = await this.usersService.findById(userId);
+        if (user?.notificationPreferences?.deadlineReminders !== false) {
+            this.server.to(userId).emit('deadline-reminder', task);
+        }
     }
 };
 exports.NotificationsGateway = NotificationsGateway;
@@ -57,6 +71,7 @@ __decorate([
     __metadata("design:type", socket_io_1.Server)
 ], NotificationsGateway.prototype, "server", void 0);
 exports.NotificationsGateway = NotificationsGateway = NotificationsGateway_1 = __decorate([
-    (0, websockets_1.WebSocketGateway)({ cors: { origin: '*' } })
+    (0, websockets_1.WebSocketGateway)({ cors: { origin: '*' } }),
+    __metadata("design:paramtypes", [users_service_1.UsersService])
 ], NotificationsGateway);
 //# sourceMappingURL=notifications.gateway.js.map

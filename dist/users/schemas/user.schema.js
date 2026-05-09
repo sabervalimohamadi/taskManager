@@ -9,12 +9,19 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserSchema = exports.User = void 0;
+exports.UserSchema = exports.User = exports.NotificationPreferences = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
+class NotificationPreferences {
+    deadlineReminders;
+    taskAssigned;
+    taskUpdated;
+}
+exports.NotificationPreferences = NotificationPreferences;
 let User = class User {
     email;
     password;
     name;
+    notificationPreferences;
     createdAt;
 };
 exports.User = User;
@@ -30,6 +37,17 @@ __decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", String)
 ], User.prototype, "name", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        type: {
+            deadlineReminders: { type: Boolean, default: true },
+            taskAssigned: { type: Boolean, default: true },
+            taskUpdated: { type: Boolean, default: true },
+        },
+        default: () => ({ deadlineReminders: true, taskAssigned: true, taskUpdated: true }),
+    }),
+    __metadata("design:type", NotificationPreferences)
+], User.prototype, "notificationPreferences", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ default: Date.now }),
     __metadata("design:type", Date)

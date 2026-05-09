@@ -91,61 +91,63 @@ let TasksService = class TasksService {
         return task;
     }
     async update(id, userId, dto) {
-        const task = await this.taskModel
-            .findOne({
+        const { version, ...updates } = dto;
+        const $set = {};
+        if (updates.title !== undefined)
+            $set.title = updates.title;
+        if (updates.description !== undefined)
+            $set.description = updates.description;
+        if (updates.status !== undefined)
+            $set.status = updates.status;
+        if (updates.priority !== undefined)
+            $set.priority = updates.priority;
+        if (updates.dueDate !== undefined)
+            $set.dueDate = new Date(updates.dueDate);
+        if (updates.assignedTo !== undefined)
+            $set.assignedTo = new mongoose_2.Types.ObjectId(updates.assignedTo);
+        const oldTask = await this.taskModel
+            .findOneAndUpdate({
             _id: new mongoose_2.Types.ObjectId(id),
+            version,
             $or: [
                 { userId: new mongoose_2.Types.ObjectId(userId) },
                 { assignedTo: new mongoose_2.Types.ObjectId(userId) },
             ],
-        })
+        }, { $set, $inc: { version: 1 } }, { new: false })
             .exec();
-        if (!task)
-            throw new common_1.NotFoundException(`Task ${id} not found`);
-        if (task.version !== dto.version) {
-            throw new common_1.ConflictException(`Optimistic lock conflict: expected version ${task.version}, got ${dto.version}`);
+        if (!oldTask) {
+            throw new common_1.ConflictException('Task was modified by another request. Please reload and retry.');
         }
-        const beforeStatus = task.status;
-        const beforeAssignedTo = task.assignedTo?.toString();
-        const beforeDueDate = task.dueDate;
-        const { version: _v, ...updates } = dto;
-        Object.assign(task, {
-            ...(updates.title !== undefined && { title: updates.title }),
-            ...(updates.description !== undefined && { description: updates.description }),
-            ...(updates.status !== undefined && { status: updates.status }),
-            ...(updates.priority !== undefined && { priority: updates.priority }),
-            ...(updates.dueDate !== undefined && { dueDate: new Date(updates.dueDate) }),
-            ...(updates.assignedTo !== undefined && {
-                assignedTo: new mongoose_2.Types.ObjectId(updates.assignedTo),
-            }),
-        });
-        task.version += 1;
-        const saved = await task.save();
+        const saved = await this.taskModel.findById(new mongoose_2.Types.ObjectId(id)).exec();
         await this.activityLogService.log(id, userId, activity_log_schema_1.ActivityAction.UPDATED, {
-            before: { status: beforeStatus, assignedTo: beforeAssignedTo, dueDate: beforeDueDate },
+            before: {
+                status: oldTask.status,
+                assignedTo: oldTask.assignedTo?.toString(),
+                dueDate: oldTask.dueDate,
+            },
             after: {
                 status: saved.status,
                 assignedTo: saved.assignedTo?.toString(),
                 dueDate: saved.dueDate,
             },
         });
-        const assignedToChanged = updates.assignedTo !== undefined && updates.assignedTo !== beforeAssignedTo;
+        const assignedToChanged = updates.assignedTo !== undefined && updates.assignedTo !== oldTask.assignedTo?.toString();
         if (assignedToChanged) {
             await this.activityLogService.log(id, userId, activity_log_schema_1.ActivityAction.ASSIGNED, {
                 assignedTo: updates.assignedTo,
             });
             this.notificationsGateway.notifyTaskAssigned(updates.assignedTo, saved);
         }
-        const statusChanged = updates.status !== undefined && updates.status !== beforeStatus;
+        const statusChanged = updates.status !== undefined && updates.status !== oldTask.status;
         if (statusChanged) {
             await this.activityLogService.log(id, userId, activity_log_schema_1.ActivityAction.STATUS_CHANGED, {
-                from: beforeStatus,
+                from: oldTask.status,
                 to: saved.status,
             });
         }
-        this.notificationsGateway.notifyTaskUpdated(task.userId.toString(), saved);
+        this.notificationsGateway.notifyTaskUpdated(oldTask.userId.toString(), saved);
         const dueDateChanged = updates.dueDate !== undefined &&
-            new Date(updates.dueDate).getTime() !== beforeDueDate?.getTime();
+            new Date(updates.dueDate).getTime() !== oldTask.dueDate?.getTime();
         if (dueDateChanged) {
             await this.queueService.cancelDeadlineJob(id);
             await this.queueService.scheduleDeadlineJob(saved);

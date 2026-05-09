@@ -39,12 +39,12 @@ export class QueueProcessor {
     const ownerId = (task.userId as any)._id.toString();
     const payload = { taskId, title: task.title, dueDate: task.dueDate };
 
-    this.notificationsGateway.notifyDeadlineReminder(ownerId, payload);
+    await this.notificationsGateway.notifyDeadlineReminder(ownerId, payload);
 
     if (task.assignedTo) {
       const assigneeId = (task.assignedTo as any)._id.toString();
       if (assigneeId !== ownerId) {
-        this.notificationsGateway.notifyDeadlineReminder(assigneeId, payload);
+        await this.notificationsGateway.notifyDeadlineReminder(assigneeId, payload);
       }
     }
   }

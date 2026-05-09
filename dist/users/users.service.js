@@ -67,6 +67,21 @@ let UsersService = class UsersService {
         const user = new this.userModel({ ...dto, password: hashedPassword });
         return user.save();
     }
+    async updatePreferences(userId, dto) {
+        const update = {};
+        if (dto.deadlineReminders !== undefined) {
+            update['notificationPreferences.deadlineReminders'] = dto.deadlineReminders;
+        }
+        if (dto.taskAssigned !== undefined) {
+            update['notificationPreferences.taskAssigned'] = dto.taskAssigned;
+        }
+        if (dto.taskUpdated !== undefined) {
+            update['notificationPreferences.taskUpdated'] = dto.taskUpdated;
+        }
+        return this.userModel
+            .findByIdAndUpdate(userId, { $set: update }, { new: true })
+            .exec();
+    }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([

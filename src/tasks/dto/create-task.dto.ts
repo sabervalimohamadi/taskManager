@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsString,
   IsNotEmpty,
@@ -11,11 +12,13 @@ import { TaskPriority, TaskStatus } from '../schemas/task.schema';
 
 export class CreateTaskDto {
   @ApiProperty()
+  @Transform(({ value }) => value?.trim())
   @IsString()
   @IsNotEmpty()
   title: string;
 
   @ApiPropertyOptional()
+  @Transform(({ value }) => value?.trim())
   @IsString()
   @IsOptional()
   description?: string;

@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from './schemas/user.schema';
 import { RegisterDto } from '../auth/dto/register.dto';
+import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 
 @Injectable()
 export class UsersService {
@@ -21,5 +22,24 @@ export class UsersService {
     const hashedPassword = await bcrypt.hash(dto.password, 10);
     const user = new this.userModel({ ...dto, password: hashedPassword });
     return user.save();
+  }
+
+  async updatePreferences(
+    userId: string,
+    dto: UpdatePreferencesDto,
+  ): Promise<UserDocument | null> {
+    const update: Record<string, boolean> = {};
+    if (dto.deadlineReminders !== undefined) {
+      update['notificationPreferences.deadlineReminders'] = dto.deadlineReminders;
+    }
+    if (dto.taskAssigned !== undefined) {
+      update['notificationPreferences.taskAssigned'] = dto.taskAssigned;
+    }
+    if (dto.taskUpdated !== undefined) {
+      update['notificationPreferences.taskUpdated'] = dto.taskUpdated;
+    }
+    return this.userModel
+      .findByIdAndUpdate(userId, { $set: update }, { new: true })
+      .exec();
   }
 }

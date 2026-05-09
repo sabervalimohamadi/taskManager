@@ -21,6 +21,7 @@ import {
 } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { ParseMongoIdPipe } from '../common/pipes/parse-mongo-id.pipe';
 import { AssignTaskDto } from './dto/assign-task.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { QueryTaskDto } from './dto/query-task.dto';
@@ -61,7 +62,7 @@ export class TasksController {
   @ApiParam({ name: 'id', description: 'Task ObjectId' })
   @ApiResponse({ status: 200, description: 'Task found' })
   @ApiResponse({ status: 404, description: 'Task not found' })
-  findOne(@Param('id') id: string, @CurrentUser() user: { userId: string }) {
+  findOne(@Param('id', ParseMongoIdPipe) id: string, @CurrentUser() user: { userId: string }) {
     return this.tasksService.findOne(id, user.userId);
   }
 
@@ -72,7 +73,7 @@ export class TasksController {
   @ApiResponse({ status: 404, description: 'Task not found' })
   @ApiResponse({ status: 409, description: 'Optimistic lock conflict' })
   update(
-    @Param('id') id: string,
+    @Param('id', ParseMongoIdPipe) id: string,
     @CurrentUser() user: { userId: string },
     @Body() dto: UpdateTaskDto,
   ) {
@@ -86,7 +87,7 @@ export class TasksController {
   @ApiResponse({ status: 204, description: 'Task deleted' })
   @ApiResponse({ status: 403, description: 'Not the task owner' })
   @ApiResponse({ status: 404, description: 'Task not found' })
-  remove(@Param('id') id: string, @CurrentUser() user: { userId: string }) {
+  remove(@Param('id', ParseMongoIdPipe) id: string, @CurrentUser() user: { userId: string }) {
     return this.tasksService.remove(id, user.userId);
   }
 
@@ -96,7 +97,7 @@ export class TasksController {
   @ApiResponse({ status: 201, description: 'Task assigned' })
   @ApiResponse({ status: 404, description: 'Task not found' })
   assignTask(
-    @Param('id') taskId: string,
+    @Param('id', ParseMongoIdPipe) taskId: string,
     @Body() dto: AssignTaskDto,
     @CurrentUser() user: { userId: string },
   ) {

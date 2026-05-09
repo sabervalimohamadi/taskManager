@@ -1,9 +1,15 @@
 import { HydratedDocument } from 'mongoose';
 export type UserDocument = HydratedDocument<User>;
+export declare class NotificationPreferences {
+    deadlineReminders: boolean;
+    taskAssigned: boolean;
+    taskUpdated: boolean;
+}
 export declare class User {
     email: string;
     password: string;
     name: string;
+    notificationPreferences: NotificationPreferences;
     createdAt: Date;
 }
 export declare const UserSchema: import("mongoose").Schema<User, import("mongoose").Model<User, any, any, any, any, any, User>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, User, import("mongoose").Document<unknown, {}, User, {
@@ -34,6 +40,15 @@ export declare const UserSchema: import("mongoose").Schema<User, import("mongoos
         id: string;
     }> | undefined;
     name?: import("mongoose").SchemaDefinitionProperty<string, User, import("mongoose").Document<unknown, {}, User, {
+        id: string;
+    }, import("mongoose").DefaultSchemaOptions> & Omit<User & {
+        _id: import("mongoose").Types.ObjectId;
+    } & {
+        __v: number;
+    }, "id"> & {
+        id: string;
+    }> | undefined;
+    notificationPreferences?: import("mongoose").SchemaDefinitionProperty<NotificationPreferences, User, import("mongoose").Document<unknown, {}, User, {
         id: string;
     }, import("mongoose").DefaultSchemaOptions> & Omit<User & {
         _id: import("mongoose").Types.ObjectId;

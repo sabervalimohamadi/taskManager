@@ -28,4 +28,11 @@ export class ActivityLogService {
     });
     return entry.save();
   }
+
+  async getLogsForTask(taskId: string): Promise<ActivityLogDocument[]> {
+    return this.activityLogModel
+      .find({ taskId: new Types.ObjectId(taskId) })
+      .sort({ timestamp: -1 })
+      .exec();
+  }
 }

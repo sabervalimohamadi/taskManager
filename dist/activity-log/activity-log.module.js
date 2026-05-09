@@ -9,6 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ActivityLogModule = void 0;
 const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
+const activity_log_controller_1 = require("./activity-log.controller");
 const activity_log_service_1 = require("./activity-log.service");
 const activity_log_schema_1 = require("./schemas/activity-log.schema");
 let ActivityLogModule = class ActivityLogModule {
@@ -21,6 +22,7 @@ exports.ActivityLogModule = ActivityLogModule = __decorate([
                 { name: activity_log_schema_1.ActivityLog.name, schema: activity_log_schema_1.ActivityLogSchema },
             ]),
         ],
+        controllers: [activity_log_controller_1.ActivityLogController],
         providers: [activity_log_service_1.ActivityLogService],
         exports: [activity_log_service_1.ActivityLogService],
     })

@@ -31,6 +31,12 @@ let ActivityLogService = class ActivityLogService {
         });
         return entry.save();
     }
+    async getLogsForTask(taskId) {
+        return this.activityLogModel
+            .find({ taskId: new mongoose_2.Types.ObjectId(taskId) })
+            .sort({ timestamp: -1 })
+            .exec();
+    }
 };
 exports.ActivityLogService = ActivityLogService;
 exports.ActivityLogService = ActivityLogService = __decorate([
