@@ -20,7 +20,10 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  @Throttle({ burst: { limit: 3, ttl: 5_000 }, sustained: { limit: 10, ttl: 60_000 } })
+  @Throttle({
+    burst: { limit: 3, ttl: 5_000 },
+    sustained: { limit: 10, ttl: 60_000 },
+  })
   @ApiOperation({ summary: 'Register a new user' })
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
@@ -28,7 +31,10 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ burst: { limit: 3, ttl: 5_000 }, sustained: { limit: 10, ttl: 60_000 } })
+  @Throttle({
+    burst: { limit: 3, ttl: 5_000 },
+    sustained: { limit: 10, ttl: 60_000 },
+  })
   @ApiOperation({ summary: 'Login and receive access + refresh tokens' })
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
@@ -36,7 +42,10 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ burst: { limit: 3, ttl: 5_000 }, sustained: { limit: 10, ttl: 60_000 } })
+  @Throttle({
+    burst: { limit: 3, ttl: 5_000 },
+    sustained: { limit: 10, ttl: 60_000 },
+  })
   @ApiOperation({ summary: 'Exchange a refresh token for a new token pair' })
   refresh(@Body() dto: RefreshTokenDto) {
     return this.authService.refresh(dto.refreshToken);

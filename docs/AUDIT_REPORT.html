@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>گزارش Audit پروژه TaskManager — راهنمای Tech Lead</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-soft: #161b22;
+    --bg-soft-2: #1c2128;
+    --border: #30363d;
+    --border-soft: #21262d;
+    --text: #e6edf3;
+    --text-soft: #adbac7;
+    --text-mute: #768390;
+    --accent: #58a6ff;
+    --accent-2: #7ee787;
+    --critical: #f85149;
+    --high: #fb8500;
+    --medium: #d29922;
+    --low: #58a6ff;
+    --good: #3fb950;
+    --code-bg: #0a0d12;
+    --code-border: #1f242c;
+    --shadow: 0 8px 24px rgba(0,0,0,.4);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Vazirmatn', system-ui, sans-serif;
+    line-height: 1.85;
+    font-size: 15.5px;
+    direction: rtl;
+  }
+  code, pre, .mono { font-family: 'JetBrains Mono', 'Consolas', monospace; direction: ltr; text-align: left; unicode-bidi: embed; }
+
+  /* Layout */
+  .page { max-width: 1180px; margin: 0 auto; padding: 40px 28px 80px; }
+
+  /* Header */
+  header.hero {
+    background: linear-gradient(135deg, #1c2230 0%, #0d1117 60%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 48px 40px;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  header.hero::before {
+    content: '';
+    position: absolute; top: -100px; left: -100px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(88,166,255,.15) 0%, transparent 70%);
+  }
+  header.hero h1 { font-size: 38px; font-weight: 800; margin-bottom: 14px; letter-spacing: -0.02em; }
+  header.hero p.subtitle { font-size: 17px; color: var(--text-soft); max-width: 780px; line-height: 1.9; }
+  header.hero .meta {
+    display: flex; gap: 20px; flex-wrap: wrap; margin-top: 28px;
+    padding-top: 24px; border-top: 1px solid var(--border-soft);
+    font-size: 13.5px; color: var(--text-mute);
+  }
+  header.hero .meta span strong { color: var(--text); font-weight: 600; }
+
+  /* Grade card */
+  .grade-card {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 32px;
+    margin-bottom: 32px;
+    display: grid; grid-template-columns: auto 1fr; gap: 32px; align-items: center;
+  }
+  .grade-circle {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: conic-gradient(var(--high) 0deg 180deg, var(--border-soft) 180deg 360deg);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .grade-circle::before {
+    content: ''; position: absolute; inset: 8px;
+    background: var(--bg-soft); border-radius: 50%;
+  }
+  .grade-circle span { position: relative; z-index: 1; font-size: 48px; font-weight: 800; color: var(--high); }
+  .grade-text h2 { font-size: 24px; margin-bottom: 8px; }
+  .grade-text p { color: var(--text-soft); }
+
+  /* TOC */
+  nav.toc {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 40px;
+  }
+  nav.toc h3 { font-size: 16px; margin-bottom: 16px; color: var(--text-mute); font-weight: 600; }
+  nav.toc ol { list-style: none; counter-reset: toc; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 24px; }
+  nav.toc li { counter-increment: toc; padding: 8px 0; border-bottom: 1px dashed var(--border-soft); }
+  nav.toc li::before {
+    content: counter(toc, decimal) ".";
+    color: var(--accent); font-weight: 600; margin-left: 8px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  nav.toc a { color: var(--text-soft); text-decoration: none; transition: color .15s; }
+  nav.toc a:hover { color: var(--accent); }
+
+  /* Section */
+  section.chapter {
+    margin-bottom: 56px;
+    scroll-margin-top: 24px;
+  }
+  section.chapter > h2 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--border);
+    display: flex; align-items: center; gap: 14px;
+  }
+  section.chapter > h2 .num {
+    background: var(--accent);
+    color: #0d1117;
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 17px; font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  section.chapter > p.lede {
+    color: var(--text-soft);
+    margin-bottom: 24px;
+    font-size: 15px;
+  }
+
+  /* Issue card */
+  .issue {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-right: 4px solid var(--medium);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+  .issue.critical { border-right-color: var(--critical); }
+  .issue.high { border-right-color: var(--high); }
+  .issue.medium { border-right-color: var(--medium); }
+  .issue.low { border-right-color: var(--low); }
+
+  .issue-header {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .issue-header h3 {
+    font-size: 19px; font-weight: 700; flex: 1;
+  }
+  .badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    direction: ltr;
+  }
+  .badge.critical { background: rgba(248,81,73,.15); color: var(--critical); border: 1px solid rgba(248,81,73,.4); }
+  .badge.high     { background: rgba(251,133,0,.15); color: var(--high);     border: 1px solid rgba(251,133,0,.4); }
+  .badge.medium   { background: rgba(210,153,34,.15);color: var(--medium);   border: 1px solid rgba(210,153,34,.4); }
+  .badge.low      { background: rgba(88,166,255,.15);color: var(--low);      border: 1px solid rgba(88,166,255,.4); }
+  .badge.good     { background: rgba(63,185,113,.15);color: var(--good);     border: 1px solid rgba(63,185,113,.4); }
+
+  .issue-meta {
+    display: flex; gap: 18px; flex-wrap: wrap;
+    margin-bottom: 18px;
+    padding: 10px 14px;
+    background: var(--bg-soft-2);
+    border-radius: 8px;
+    font-size: 13.5px;
+    color: var(--text-mute);
+  }
+  .issue-meta span strong { color: var(--text-soft); margin-left: 4px; }
+  .issue-meta .file { font-family: 'JetBrains Mono', monospace; direction: ltr; color: var(--accent); font-size: 12.5px; }
+
+  .issue h4 {
+    font-size: 14px; font-weight: 600; color: var(--text-mute);
+    text-transform: uppercase; letter-spacing: .08em;
+    margin: 22px 0 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .issue h4 .icon { font-size: 16px; }
+  .issue p { color: var(--text-soft); margin-bottom: 12px; }
+  .issue ul { list-style: none; margin-bottom: 12px; }
+  .issue ul li {
+    padding-right: 22px; position: relative; color: var(--text-soft);
+    margin-bottom: 8px;
+  }
+  .issue ul li::before {
+    content: '◆'; position: absolute; right: 0; top: 0;
+    color: var(--accent); font-size: 10px;
+  }
+
+  /* Code blocks */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.7;
+    margin: 12px 0;
+  }
+  pre code { color: #c9d1d9; }
+  pre.bad { border-right: 3px solid var(--critical); }
+  pre.good { border-right: 3px solid var(--good); }
+  pre .comment { color: #768390; font-style: italic; }
+  pre .keyword { color: #ff7b72; }
+  pre .string { color: #a5d6ff; }
+  pre .func { color: #d2a8ff; }
+  pre .type { color: #ffa657; }
+  pre .const { color: #79c0ff; }
+
+  code.inline {
+    background: var(--bg-soft-2);
+    color: #ffa657;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 13px;
+    border: 1px solid var(--border-soft);
+  }
+
+  .label { display: inline-block; font-size: 11px; color: var(--text-mute); margin-bottom: 4px; font-weight: 600; }
+  .label.bad { color: var(--critical); }
+  .label.good { color: var(--good); }
+
+  /* Two col */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .two-col, nav.toc ol, .grade-card { grid-template-columns: 1fr; } .grade-card { text-align: center; } }
+
+  /* Score table */
+  table.scores {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 24px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  table.scores th, table.scores td {
+    padding: 14px 18px;
+    text-align: right;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  table.scores th { background: var(--bg-soft-2); font-size: 13px; color: var(--text-mute); font-weight: 600; }
+  table.scores tr:last-child td { border-bottom: none; }
+  table.scores .score-bar {
+    display: inline-block; vertical-align: middle;
+    width: 100px; height: 8px;
+    background: var(--border-soft); border-radius: 4px;
+    margin-left: 10px; position: relative; overflow: hidden;
+  }
+  table.scores .score-bar::after {
+    content: ''; position: absolute; top: 0; right: 0; bottom: 0;
+    width: var(--w, 0%);
+    background: linear-gradient(90deg, var(--critical), var(--high), var(--good));
+    border-radius: 4px;
+  }
+
+  /* Risk table */
+  table.risks {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 13.5px;
+  }
+  table.risks th, table.risks td {
+    padding: 12px 16px;
+    text-align: right;
+    border-bottom: 1px solid var(--border-soft);
+    vertical-align: top;
+  }
+  table.risks th { background: var(--bg-soft-2); color: var(--text-mute); font-weight: 600; font-size: 12.5px; }
+  table.risks tr:last-child td { border-bottom: none; }
+  table.risks td:first-child { font-weight: 600; color: var(--accent); width: 30px; }
+
+  /* Checklist */
+  .checklist {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+  }
+  .checklist h3 { font-size: 18px; margin-bottom: 18px; }
+  .checklist ul { list-style: none; }
+  .checklist li {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-soft);
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist .check {
+    flex-shrink: 0;
+    width: 22px; height: 22px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    margin-top: 4px;
+  }
+  .checklist .priority {
+    flex-shrink: 0;
+    margin-right: auto;
+  }
+
+  /* Final verdict */
+  .verdict {
+    background: linear-gradient(135deg, #1a1f2e 0%, #0d1117 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    margin-top: 40px;
+  }
+  .verdict h2 { font-size: 26px; margin-bottom: 20px; }
+  .verdict-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 24px; }
+  .verdict-grid > div {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+  }
+  .verdict-grid h4 { margin-bottom: 12px; font-size: 15px; }
+  .verdict-grid.reject h4 { color: var(--critical); }
+  .verdict-grid.accept h4 { color: var(--good); }
+  @media (max-width: 720px) { .verdict-grid { grid-template-columns: 1fr; } }
+
+  /* Tip box */
+  .tip {
+    background: rgba(88,166,255,.06);
+    border: 1px solid rgba(88,166,255,.25);
+    border-right: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    font-size: 14px;
+    color: var(--text-soft);
+  }
+  .tip strong { color: var(--accent); margin-left: 6px; }
+
+  .warn {
+    background: rgba(248,81,73,.06);
+    border: 1px solid rgba(248,81,73,.25);
+    border-right: 4px solid var(--critical);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    font-size: 14px;
+    color: var(--text-soft);
+  }
+  .warn strong { color: var(--critical); margin-left: 6px; }
+
+  /* Footer */
+  footer {
+    margin-top: 60px;
+    padding-top: 30px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-mute);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <header class="hero">
+    <h1>گزارش Audit کامل پروژه TaskManager</h1>
+    <p class="subtitle">
+      یک بررسی موشکافانه از زاویه‌ی Senior Staff Engineer / Tech Lead.
+      هدف این سند صرفاً پیدا کردن باگ نیست — بلکه آموزش گام‌به‌گام برای رساندن این پروژه از سطح
+      «tutorial» به سطح production-grade است.
+      هر مشکل با کد دقیق، خطوط فایل، توضیح ریشه‌ای، و راه‌حل کامل با code snippet آمده است.
+    </p>
+    <div class="meta">
+      <span><strong>Stack:</strong> NestJS 11 · MongoDB · Redis · BullMQ · Socket.IO</span>
+      <span><strong>تعداد مشکلات:</strong> ۲۲ مورد</span>
+      <span><strong>Critical:</strong> ۵ · <strong>High:</strong> ۸ · <strong>Medium:</strong> ۷ · <strong>Low:</strong> ۲</span>
+    </div>
+  </header>
+
+  <!-- GRADE CARD -->
+  <div class="grade-card">
+    <div class="grade-circle"><span>C</span></div>
+    <div class="grade-text">
+      <h2>سطح فعلی پروژه: Mid-Junior</h2>
+      <p>
+        ساختار NestJS تمیز و ماژولار است، اما زیرپوست آن چندین red flag امنیتی critical،
+        race condition، state ناپایدار برای scale، و تست‌نویسی تقریباً صفر دارد.
+        با ۱ هفته کار متمرکز روی این سند، پروژه به یک submission قوی mid-level قابل ارتقاست.
+      </p>
+    </div>
+  </div>
+
+  <!-- TOC -->
+  <nav class="toc">
+    <h3>فهرست مطالب</h3>
+    <ol>
+      <li><a href="#scoring">امتیازدهی کلی پروژه</a></li>
+      <li><a href="#critical">مشکلات Critical (فوری حل کن)</a></li>
+      <li><a href="#high">مشکلات High Severity</a></li>
+      <li><a href="#medium">مشکلات Medium Severity</a></li>
+      <li><a href="#low">مشکلات Low / Code Smells</a></li>
+      <li><a href="#production">آماده‌سازی Production</a></li>
+      <li><a href="#testing">استراتژی تست (که نداری)</a></li>
+      <li><a href="#checklist">چک‌لیست نهایی قبل از مصاحبه</a></li>
+      <li><a href="#verdict">حکم نهایی</a></li>
+    </ol>
+  </nav>
+
+  <!-- SCORING -->
+  <section class="chapter" id="scoring">
+    <h2><span class="num">0</span>امتیازدهی کلی</h2>
+    <p class="lede">قضاوت بر اساس کد واقعی پروژه. هیچ امتیازی الکی داده نشده.</p>
+    <table class="scores">
+      <thead>
+        <tr><th style="width:30%">حوزه</th><th>نمره</th><th>توضیح کوتاه</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Architecture</td><td><span class="score-bar" style="--w:60%"></span> ۶/۱۰</td><td>module boundaries تمیز، اما layering سطحی و Repository abstraction ندارد.</td></tr>
+        <tr><td>Scalability</td><td><span class="score-bar" style="--w:30%"></span> ۳/۱۰</td><td>in-memory map در WS، نبود Redis adapter، populate در hot path.</td></tr>
+        <tr><td>Security</td><td><span class="score-bar" style="--w:20%"></span> ۲/۱۰</td><td>Secret leak، WS بدون auth، چند IDOR، JWT ضعیف.</td></tr>
+        <tr><td>TypeScript Quality</td><td><span class="score-bar" style="--w:40%"></span> ۴/۱۰</td><td>strict mode خاموش، چند <code class="inline">any</code> در hot path.</td></tr>
+        <tr><td>Observability</td><td><span class="score-bar" style="--w:10%"></span> ۱/۱۰</td><td>صرفاً Logger متنی. نه metric، نه trace، نه correlation id.</td></tr>
+        <tr><td>Maintainability</td><td><span class="score-bar" style="--w:60%"></span> ۶/۱۰</td><td>کد خوانا، naming تمیز، اما تست تقریباً صفر.</td></tr>
+        <tr><td>Production Readiness</td><td><span class="score-bar" style="--w:20%"></span> ۲/۱۰</td><td>نه helmet، نه graceful shutdown، نه health، نه CI/CD.</td></tr>
+        <tr><td>Testing</td><td><span class="score-bar" style="--w:10%"></span> ۱/۱۰</td><td>فقط Hello World تست شده.</td></tr>
+        <tr><td>Concurrency Correctness</td><td><span class="score-bar" style="--w:50%"></span> ۵/۱۰</td><td>optimistic lock در update درست، اما در assign غایب.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ============================ CRITICAL ============================ -->
+  <section class="chapter" id="critical">
+    <h2><span class="num">1</span>مشکلات Critical</h2>
+    <p class="lede">این موارد به‌تنهایی برای reject شدن در یک technical screening کافی هستند. فوراً حل کن.</p>
+
+    <!-- 1.1 -->
+    <article class="issue critical">
+      <div class="issue-header">
+        <h3>۱.۱ — لو رفتن JWT_SECRET و commit شدن <code class="inline">dist/</code> در Git</h3>
+        <span class="badge critical">CRITICAL</span>
+      </div>
+      <div class="issue-meta">
+        <span class="file">.env</span>
+        <span class="file">.gitignore</span>
+        <span><strong>Severity:</strong> Critical</span>
+      </div>
+
+      <h4><span class="icon">🔥</span>چه چیزی پیدا شد</h4>
+      <p>فایل <code class="inline">.gitignore</code> فقط یک خط دارد:</p>
+      <pre class="bad"><code>node_modules</code></pre>
+      <p>در نتیجه:</p>
+      <ul>
+        <li>فایل <code class="inline">.env</code> همراه با <code class="inline">JWT_SECRET=supersecretkey</code> در repo committed شده.</li>
+        <li>کل پوشه‌ی <code class="inline">dist/</code> (build output) در git tracked است و پر از diff اضافی است.</li>
+        <li>هرکسی که این repo را ببیند می‌تواند JWT جعل کند → account takeover کامل.</li>
+      </ul>
+
+      <h4><span class="icon">💥</span>اثر در دنیای واقعی</h4>
+      <p>
+        مهاجم با همین secret می‌تواند یک token برای هر <code class="inline">userId</code> دلخواه امضا کند و وارد شود.
+        کل سیستم authentication بی‌معنی می‌شود. این یک <strong>blocker mortal</strong> در هر hiring loop است.
+      </p>
+
+      <h4><span class="icon">🛠️</span>راه‌حل گام‌به‌گام</h4>
+      <p><span class="label">گام ۱</span> — <code class="inline">.gitignore</code> استاندارد NestJS بساز:</p>
+      <pre class="good"><code># Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Coverage
+coverage/
+.nyc_output/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store</code></pre>
+
+      <p><span class="label">گام ۲</span> — فایل‌های ردیابی شده را از index حذف کن (روی disk باقی می‌مانند):</p>
+      <pre class="good"><code>git rm --cached .env
+git rm -r --cached dist/
+git commit -m "chore: stop tracking build output and env files"</code></pre>
+
+      <p><span class="label">گام ۳</span> — secret را rotate کن. یک کلید قوی بساز:</p>
+      <pre class="good"><code>node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"</code></pre>
+
+      <p><span class="label">گام ۴</span> — اگر repo public است یا حتی private که افراد زیادی دسترسی داشته‌اند، history را پاک کن:</p>
+      <pre class="good"><code># با git-filter-repo (پیشنهاد می‌شود)
+pip install git-filter-repo
+git filter-repo --path .env --invert-paths
+git filter-repo --path dist --invert-paths
+git push origin --force --all</code></pre>
+
+      <div class="warn"><strong>هشدار:</strong> rewrite history روی repo اشتراکی همه‌ی collaborator ها را مجبور به re-clone می‌کند. اگر تنهایی کار می‌کنی نگران نباش.</div>
+    </article>
+
+    <!-- 1.2 -->
+    <article class="issue critical">
+      <div class="issue-header">
+        <h3>۱.۲ — WebSocket Gateway هیچ احراز هویتی ندارد</h3>
+        <span class="badge critical">CRITICAL</span>
+      </div>
+      <div class="issue-meta">
+        <span class="file">src/gateway/notifications.gateway.ts:21-30</span>
+        <span><strong>نوع:</strong> Auth Bypass</span>
+      </div>
+
+      <h4><span class="icon">🔥</span>کد فعلی (آسیب‌پذیر)</h4>
+      <pre class="bad"><code>handleConnection(client: Socket): void {
+  const userId = client.handshake.query.userId as string;
+  if (!userId) {
+    client.disconnect();
+    return;
+  }
+  this.userSocketMap.set(userId, client.id);
+  client.join(userId);
+}</code></pre>
+
+      <h4><span class="icon">💥</span>چرا فاجعه است</h4>
+      <p>
+        مهاجم فقط با یک کوئری مثل <code class="inline">?userId=&lt;victimId&gt;</code> به socket متصل می‌شود.
+        از آن لحظه همه‌ی event های قربانی (<code class="inline">task-assigned</code>, <code class="inline">task-updated</code>,
+        <code class="inline">deadline-reminder</code>) برای مهاجم emit می‌شوند.
+        این یک <strong>broadcast hijack</strong> است. هیچ token، هیچ verification، هیچ.
+      </p>
+
+      <h4><span class="icon">🛠️</span>راه‌حل صحیح</h4>
+      <p><span class="label">گام ۱</span> — یک Guard مخصوص WebSocket بساز:</p>
+      <pre class="good"><code>// src/common/guards/ws-jwt.guard.ts
+import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { WsException } from '@nestjs/websockets';
+import { Socket } from 'socket.io';
+
+@Injectable()
+export class WsJwtGuard implements CanActivate {
+  private readonly logger = new Logger(WsJwtGuard.name);
+
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  canActivate(context: ExecutionContext): boolean {
+    const client: Socket = context.switchToWs().getClient();
+    return this.validateClient(client);
+  }
+
+  validateClient(client: Socket): boolean {
+    const token =
+      client.handshake.auth?.token ||
+      (client.handshake.headers.authorization as string)?.replace('Bearer ', '');
+
+    if (!token) throw new WsException('Missing token');
+
+    try {
+      const payload = this.jwtService.verify(token, {
+        secret: this.configService.get('JWT_SECRET'),
+      });
+      client.data.userId = payload.sub;
+      client.data.email = payload.email;
+      return true;
+    } catch (err) {
+      this.logger.warn(`WS auth failed: ${err.message}`);
+      throw new WsException('Invalid token');
+    }
+  }
+}</code></pre>
+
+      <p><span class="label">گام ۲</span> — gateway را به‌گونه‌ای بازنویسی کن که از <code class="inline">client.data.userId</code> استفاده کند:</p>
+      <pre class="good"><code>@WebSocketGateway({
+  cors: { origin: process.env.WS_CORS_ORIGIN?.split(',') ?? false },
+})
+export class NotificationsGateway implements OnGatewayConnection {
+  constructor(
+    private readonly wsJwtGuard: WsJwtGuard,
+    private readonly usersService: UsersService,
+  ) {}
+
+  async handleConnection(client: Socket): Promise<void> {
+    try {
+      this.wsJwtGuard.validateClient(client);
+      const userId = client.data.userId;
+      client.join(userId);
+      this.logger.log(`User ${userId} connected (socket ${client.id})`);
+    } catch (err) {
+      client.emit('error', { message: 'Unauthorized' });
+      client.disconnect(true);
+    }
+  }
+}</code></pre>
+
+      <div class="tip"><strong>نکته:</strong> client سمت frontend باید token را در handshake بفرستد:
+        <code class="inline">io(url, { auth: { token: jwt } })</code>
+      </div>
+    </article>
+
+    <!-- 1.3 -->
+    <article class="issue critical">
+      <div class="issue-header">
+        <h3>۱.۳ — JWT بدون refresh rotation و revoke strategy</h3>
+        <span class="badge critical">CRITICAL</span>
+      </div>
+      <div class="issue-meta">
+        <span class="file">src/auth/auth.service.ts:37-39</span>
+        <span class="file">src/auth/auth.module.ts</span>
+        <span><strong>نوع:</strong> Session Security</span>
+      </div>
+
+      <h4><span class="icon">🔥</span>مشکل</h4>
+      <ul>
+        <li>یک access token با عمر <code class="inline">7d</code> صادر می‌شود.</li>
+        <li>هیچ refresh token وجود ندارد.</li>
+        <li>هیچ logout / blacklist / revoke ای نداری.</li>
+        <li>اگر token leak کند، تا یک هفته‌ی کامل valid است.</li>
+      </ul>
+
+      <h4><span class="icon">🛠️</span>طراحی صحیح: Access + Refresh با Rotation</h4>
+      <pre class="good"><code>// src/auth/auth.service.ts
+async login(dto: LoginDto, req: Request) {
+  const user = await this.usersService.findByEmail(dto.email);
+  if (!user || !(await bcrypt.compare(dto.password, user.password))) {
+    throw new UnauthorizedException('Invalid credentials');
+  }
+  return this.issueTokenPair(user);
+}
+
+private async issueTokenPair(user: UserDocument) {
+  const accessToken = this.jwtService.sign(
+    { sub: user._id, email: user.email },
+    { expiresIn: '15m' }
+  );
+
+  const refreshTokenRaw = randomBytes(64).toString('hex');
+  const refreshTokenHash = await bcrypt.hash(refreshTokenRaw, 10);
+
+  await this.refreshTokenModel.create({
+    userId: user._id,
+    tokenHash: refreshTokenHash,
+    expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000),
+    family: randomUUID(),
+  });
+
+  return { accessToken, refreshToken: refreshTokenRaw };
+}
+
+async refresh(rawToken: string) {
+  // 1. Hash incoming token, lookup
+  // 2. اگر already-used → reuse detected → revoke entire family
+  // 3. اگر valid → mark old as used، صدور جفت جدید با همان family
+  // ...
+}</code></pre>
+
+      <h4><span class="icon">📐</span>اصول طراحی</h4>
+      <ul>
+        <li><strong>Access token کوتاه</strong> (10–15 دقیقه) → کاهش شعاع آسیب در صورت leak.</li>
+        <li><strong>Refresh token در DB hash شده</strong> ذخیره می‌شود (مثل password).</li>
+        <li><strong>Token family</strong>: اگر یک refresh token قبلاً استفاده شده دوباره بیاید → کل family revoke شود (reuse detection).</li>
+        <li><strong>Algorithm explicit</strong> — در production معمولاً RS256 با key rotation از یک KMS.</li>
+      </ul>
+    </article>
+
+    <!-- 1.4 -->
+    <article class="issue critical">
+      <div class="issue-header">
+        <h3>۱.۴ — <code class="inline">userSocketMap</code> در حافظه = فقط روی یک instance کار می‌کند</h3>
+        <span class="badge critical">CRITICAL</span>
+      </div>
+      <div class="issue-meta">
+        <span class="file">src/gateway/notifications.gateway.ts:17</span>
+        <span><strong>نوع:</strong> Scaling Bug</span>
+      </div>
+
+      <h4><span class="icon">🔥</span>مشکل</h4>
+      <p>این Map در حافظه‌ی همان process است:</p>
+      <pre class="bad"><code>private readonly userSocketMap = new Map&lt;string, string&gt;();</code></pre>
+      <p>وقتی پشت یک load balancer دو replica از API بالا بیاوری:</p>
+      <ul>
+        <li>User <code class="inline">A</code> به replica1 وصل، B به replica2.</li>
+        <li>QueueProcessor روی replica1 می‌خواهد به B notification بفرستد.</li>
+        <li>اما socket ای از B در replica1 وجود ندارد. پیام گم می‌شود.</li>
+      </ul>
+      <p>
+        نکته‌ی شیرین: همین Map <strong>هرگز در کد استفاده نمی‌شود</strong>! صرفاً به‌خاطر
+        <code class="inline">client.join(userId)</code>، emit با <code class="inline">server.to(userId)</code> کار می‌کند. یعنی:
+      </p>
+      <ul>
+        <li>این Map dead state است.</li>
+        <li>Memory leak دارد چون روی reconnect همان user، entry قبلی override می‌شود اما در disconnect قبلی، socket id مطابق نیست و entry قدیمی حذف نمی‌شود.</li>
+      </ul>
+
+      <h4><span class="icon">🛠️</span>راه‌حل: Redis Adapter</h4>
+      <pre class="good"><code>npm install @socket.io/redis-adapter ioredis</code></pre>
+
+      <pre class="good"><code>// src/gateway/redis-io.adapter.ts
+import { IoAdapter } from '@nestjs/platform-socket.io';
+import { ServerOptions } from 'socket.io';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { createClient } from 'redis';
+
+export class RedisIoAdapter extends IoAdapter {
+  private adapterConstructor;
+
+  async connectToRedis(url: string): Promise<void> {
+    const pub = createClient({ url });
+    const sub = pub.duplicate();
+    await Promise.all([pub.connect(), sub.connect()]);
+    this.adapterConstructor = createAdapter(pub, sub);
+  }
+
+  createIOServer(port: number, options?: ServerOptions) {
+    const server = super.createIOServer(port, options);
+    server.adapter(this.adapterConstructor);
+    return server;
+  }
+}</code></pre>
+
+      <pre class="good"><code>// src/main.ts
+const adapter = new RedisIoAdapter(app);
+await adapter.connectToRedis(process.env.REDIS_URL);
+app.useWebSocketAdapter(adapter);</code></pre>
+
+      <p>سپس <code class="inline">userSocketMap</code> را کاملاً <strong>حذف کن</strong> — Socket.IO خودش با rooms کار می‌کند.</p>
+    </article>
+
+    <!-- 1.5 -->
+    <article class="issue critical">
+      <div class="issue-header">
+        <h3>۱.۵ — هر notification یک DB hit برای چک preferences</h3>
+        <span class="badge critical">CRITICAL</span>
+      </div>
+      <div class="issue-meta">
+        <span class="file">src/gateway/notifications.gateway.ts:46-65</span>
+        <span><strong>نوع:</strong> Performance / N+1</span>
+      </div>
+
+      <h4><span class="icon">🔥</span>مشکل</h4>
+      <pre class="bad"><code>async notifyTaskUpdated(userId, task) {
+  const user = await this.usersService.findById(userId);  // ← DB روی هر emit
+  if (user?.notificationPreferences?.taskUpdated !== false) {
+    this.server.to(userId).emit('task-updated', task);
+  }
+}</code></pre>
+      <p>زیر بار، روی هر بروزرسانی task یک round-trip به Mongo فقط برای چک یک boolean.</p>
+
+      <h4><span class="icon">🛠️</span>راه‌حل با Cache</h4>
+      <pre class="good"><code>private async getPrefs(userId: string) {
+  const key = `prefs:${userId}`;
+  let prefs = await this.cache.get&lt;NotificationPreferences&gt;(key);
+  if (!prefs) {
+    const user = await this.usersService.findById(userId);
+    prefs = user?.notificationPreferences ?? defaultPrefs;
+    await this.cache.set(key, prefs, 300_000); // 5 min
+  }
+  return prefs;
+}
+
+// در update preferences، cache invalidate کن:
+async updatePreferences(userId, dto) {
+  const updated = await this.userModel.findByIdAndUpdate(...);
+  await this.cache.del(`prefs:${userId}`);
+  return updated;
+}</code></pre>
+    </article>
+  </section>
+
+  <!-- ============================ HIGH ============================ -->
+  <section class="chapter" id="high">
+    <h2><span class="num">2</span>مشکلات High</h2>
+    <p class="lede">این‌ها در review حتماً پیدا می‌شوند. باید قبل از ارائه حل شوند.</p>
+
+    <!-- 2.1 race in update -->
+    <article class="issue high">
+      <div class="issue-header">
+        <h3>۲.۱ — Race Condition در مسیر update task</h3>
+        <span class="badge high">HIGH</span>
+      </div>
+      <div class="issue-meta">
+        <span class="file">src/tasks/tasks.service.ts:107-128</span>
+      </div>
+      <h4><span class="icon">🔥</span>مشکل</h4>
+      <pre class="bad"><code>const oldTask = await this.taskModel.findOneAndUpdate(
+  { _id, version, $or: [...] },
+  { $set, $inc: { version: 1 } },
+  { new: false },
+).exec();
+// ...
+const saved = await this.taskModel.findById(...).exec(); // ← read دوم بدون lock</code></pre>
+      <p>
+        بین این دو read، یک update دیگر می‌تواند اتفاق بیفتد. در نتیجه <code class="inline">saved</code> دیگر state بعد از این
+        update نیست. activity log <code class="inline">before/after</code> نادرست ثبت می‌شود.
+      </p>
+
+      <h4><span class="icon">🛠️</span>راه‌حل</h4>
+      <pre class="good"><code>// هم before هم after را در یک atomic call بگیر
+const result = await this.taskModel.findOneAndUpdate(
+  { _id: new Types.ObjectId(id), version, /* ownership */ },
+  { $set, $inc: { version: 1 } },
+  { new: true, includeResultMetadata: false }
+).exec();
+
+if (!result) throw new ConflictException('Version mismatch');
+
+// قبل از اعمال در یک متغیر نگه داشته شده بود
+const before = oldSnapshotFromBeforeQuery;
+const after = result;</code></pre>
+      <p>یا الگوی متداول: قبل از update با <code class="inline">findById</code> snapshot بگیر، سپس <code class="inline">{new:true}</code> برای after.</p>
+    </article>
+
+    <!-- 2.2 assignTask race -->
+    <article class="issue high">
+      <div class="issue-header">
+        <h3>۲.۲ — <code class="inline">assignTask</code> بدون optimistic lock</h3>
+        <span class="badge high">HIGH</span>
+      </div>
+      <div class="issue-meta"><span class="file">src/tasks/tasks.service.ts:182-209</span></div>
+
+      <h4><span class="icon">🔥</span>مشکل</h4>
+      <pre class="bad"><code>const task = await this.taskModel.findOne({...}).exec();   // read
+task.assignedTo = new Types.ObjectId(dto.assigneeId);
+task.version += 1;
+const saved = await task.save();                            // write</code></pre>
+      <p>
+        دو request همزمان: هر دو <code class="inline">version=5</code> می‌خوانند، هر دو روی ۶ می‌نویسند.
+        یکی silently overwrite می‌شود. یعنی همان pattern که در update کنترل شده، اینجا غایب است.
+      </p>
+
+      <h4><span class="icon">🛠️</span>راه‌حل</h4>
+      <pre class="good"><code>async assignTask(taskId, dto, userId) {
+  const updated = await this.taskModel.findOneAndUpdate(
+    {
+      _id: new Types.ObjectId(taskId),
+      version: dto.expectedVersion,        // ← lock
+      $or: [
+        { userId: new Types.ObjectId(userId) },
+        { assignedTo: new Types.ObjectId(userId) },
+      ],
+    },
+    {
+      $set: { assignedTo: new Types.ObjectId(dto.assigneeId) },
+      $inc: { version: 1 },
+    },
+    { new: true },
+  ).exec();
+
+  if (!updated) {
+    throw new ConflictException('Version mismatch or task not found');
+  }
+  // ...
+}</code></pre>
+    </article>
+
+    <!-- 2.3 IDOR Comments / Attachments -->
+    <article class="issue high">
+      <div class="issue-header">
+        <h3>۲.۳ — IDOR در Comments و Attachments</h3>
+        <span class="badge high">HIGH</span>
+      </div>
+      <div class="issue-meta">
+        <span class="file">src/comments/comments.service.ts:18-32</span>
+        <span class="file">src/attachments/attachments.service.ts:19-33</span>
+      </div>
+
+      <h4><span class="icon">🔥</span>مشکل</h4>
+      <p>هر کاربر authenticated می‌تواند روی task هر کاربر دیگری comment / attachment اضافه کند یا لیست کامل بگیرد.</p>
+      <pre class="bad"><code>async addComment(taskId, userId, content) {
+  const task = await this.taskModel.findById(taskId).exec();
+  if (!task) throw new NotFoundException(...);
+  // ❌ هیچ چک ownership / membership ای نیست
+  const comment = new this.commentModel({ ... });
+  return comment.save();
+}</code></pre>
+
+      <h4><span class="icon">🛠️</span>راه‌حل: helper مشترک برای access check</h4>
+      <pre class="good"><code>// src/tasks/tasks.service.ts
+async assertUserCanAccessTask(taskId: string, userId: string): Promise&lt;TaskDocument&gt; {
+  const task = await this.taskModel.findOne({
+    _id: new Types.ObjectId(taskId),
+    $or: [
+      { userId: new Types.ObjectId(userId) },
+      { assignedTo: new Types.ObjectId(userId) },
+    ],
+  }).exec();
+  if (!task) throw new NotFoundException(`Task ${taskId} not found or no access`);
+  return task;
+}</code></pre>
+
+      <pre class="good"><code>// در CommentsService
+async addComment(taskId, userId, content) {
+  await this.tasksService.assertUserCanAccessTask(taskId, userId);  // ← این خط
+  // ادامه...
+}</code></pre>
+      <div class="tip"><strong>اصل:</strong> هر endpoint که با شناسه‌ی resource دیگری کار می‌کند، authorization باید روی هر دو لایه چک شود — نه فقط authentication.</div>
+    </article>
+
+    <!-- 2.4 ActivityLog endpoint -->
+    <article class="issue high">
+      <div class="issue-header">
+        <h3>۲.۴ — Endpoint ActivityLog کاملاً باز است</h3>
+        <span class="badge high">HIGH</span>
+      </div>
+      <div class="issue-meta"><span class="file">src/activity-log/activity-log.controller.ts:25-27</span></div>
+
+      <h4><span class="icon">🔥</span>مشکل</h4>
+      <pre class="bad"><code>@Get('tasks/:taskId/activity')
+async getLogsForTask(@Param('taskId') taskId: string) {
+  return this.activityLogService.getLogsForTask(taskId);
+}</code></pre>
+      <ul>
+        <li>هیچ check ای روی این که requester به task دسترسی دارد یا نه نیست.</li>
+        <li><code class="inline">taskId</code> با <code class="inline">ParseMongoIdPipe</code> validate نشده.</li>
+        <li>پس هر userی می‌تواند تاریخچه‌ی هر task ای را ببیند → metadata leak.</li>
+      </ul>
+
+      <h4><span class="icon">🛠️</span>راه‌حل</h4>
+      <pre class="good"><code>@Get('tasks/:taskId/activity')
+@UseGuards(JwtAuthGuard)
+async getLogsForTask(
+  @Param('taskId', ParseMongoIdPipe) taskId: string,
+  @CurrentUser() user: { userId: string },
+) {
+  await this.tasksService.assertUserCanAccessTask(taskId, user.userId);
+  return this.activityLogService.getLogsForTask(taskId);
+}</code></pre>
+    </article>
+
+    <!-- 2.5 Reports -->
+    <article class="issue high">
+      <div class="issue-header">
+        <h3>۲.۵ — گزارش‌های Reports تمام داده‌های tenant را برمی‌گردانند</h3>
+        <span class="badge high">HIGH</span>
+      </div>
+      <div class="issue-meta"><span class="file">src/reports/reports.service.ts:17-94</span></div>
+
+      <h4><span class="icon">🔥</span>مشکلات</h4>
+      <ul>
+        <li><code class="inline">getCompletedTasksPerUser</code> داده‌ی همه‌ی userها را برمی‌گرداند، بدون scope.</li>
+        <li><code class="inline">getOverdueTasks</code> با cache key ثابت — همه‌ی userها همان global list را می‌بینند.</li>
+        <li><code class="inline">getTasksCompletedOverTime</code> هیچ bound روی date range ندارد → unbounded scan = DoS.</li>
+      </ul>
+
+      <h4><span class="icon">🛠️</span>راه‌حل</h4>
+      <ol style="padding-right: 24px; color: var(--text-soft);">
+        <li><strong>RBAC اضافه کن</strong>: فیلد <code class="inline">role</code> در User، Guard مخصوص <code class="inline">RolesGuard</code> + <code class="inline">@Roles('admin')</code> روی این endpoint ها.</li>
+        <li><strong>یا scope کن</strong>: گزارش‌ها فقط task های خود user را برگردانند.</li>
+        <li><strong>cache key per-user</strong>: <code class="inline">`report:overdue:${userId}`</code></li>
+        <li><strong>date range validation</strong>: حداکثر ۱ سال.</li>
+      </ol>
+
+      <pre class="good"><code>// reports.dto.ts
+export class DateRangeDto {
+  @IsDateString() from: string;
+  @IsDateString() to: string;
+
+  @ValidateIf(o => true)
+  validateRange() {
+    const diff = +new Date(this.to) - +new Date(this.from);
+    if (diff < 0) throw new BadRequestException('Invalid range');
+    if (diff > 365 * 24 * 3600 * 1000) {
+      throw new BadRequestException('Range too large (max 1 year)');
+    }
+  }
+}</code></pre>
+    </article>
+
+    <!-- 2.6 cancel-then-schedule non-atomic -->
+    <article class="issue high">
+      <div class="issue-header">
+        <h3>۲.۶ — Cancel و Reschedule صف به‌صورت atomic انجام نمی‌شود</h3>
+        <span class="badge high">HIGH</span>
+      </div>
+      <div class="issue-meta"><span class="file">src/tasks/tasks.service.ts:166-167</span></div>
+
+      <h4><span class="icon">🔥</span>مشکل</h4>
+      <pre class="bad"><code>await this.queueService.cancelDeadlineJob(id);
+await this.queueService.scheduleDeadlineJob(saved!);</code></pre>
+      <p>اگر بین این دو خط process کِرش کند یا schedule fail شود → reminder از دست می‌رود.</p>
+
+      <h4><span class="icon">🛠️</span>راه‌حل: Outbox Pattern</h4>
+      <pre class="good"><code>// به‌جای دو call مستقیم، یک رکورد در outbox collection بنویس
+@Transactional()
+async update(...) {
+  // ۱. update task
+  const updated = await this.taskModel.findOneAndUpdate(...);
+
+  // ۲. در همان transaction، event بنویس
+  await this.outboxModel.create({
+    type: 'task.dueDate.changed',
+    payload: { taskId: id, dueDate: updated.dueDate },
+    status: 'pending',
+  });
+}
+
+// یک worker جدا، outbox را می‌خواند و jobs را schedule می‌کند
+@Cron('*/5 * * * * *')
+async drainOutbox() {
+  const events = await this.outboxModel.find({ status: 'pending' }).limit(100);
+  for (const e of events) {
+    try {
+      await this.queueService.handle(e);
+      e.status = 'done';
+    } catch { /* retry */ }
+    await e.save();
+  }
+}</code></pre>
+      <div class="tip"><strong>اصل Transactional Outbox:</strong> در یک تراکنش هم state اصلی هم intent تغییر صف ذخیره می‌شود → at-least-once delivery تضمین می‌شود.</div>
+    </article>
+
+    <!-- 2.7 -->
+    <article class="issue high">
+      <div class="issue-header">
+        <h3>۲.۷ — Pagination با countDocuments + populate ناکارآمد</h3>
+        <span class="badge high">HIGH</span>
+      </div>
+      <div class="issue-meta"><span class="file">src/tasks/tasks.service.ts:73-76</span></div>
+
+      <h4><span class="icon">🔥</span>مشکل</h4>
+      <ul>
+        <li><code class="inline">$or</code> روی userId / assignedTo معمولاً نمی‌تواند از compound index بهینه استفاده کند.</li>
+        <li><code class="inline">countDocuments</code> روی dataset بزرگ پرهزینه است.</li>
+        <li>هیچ projection نداری → کل document منتقل می‌شود.</li>
+      </ul>
+
+      <h4><span class="icon">🛠️</span>دو راه‌حل</h4>
+      <p><strong>الف) Cursor pagination</strong> برای feed-style:</p>
+      <pre class="good"><code>const tasks = await this.taskModel
+  .find({ ...filter, _id: { $lt: cursor } })
+  .sort({ _id: -1 })
+  .limit(limit)
+  .select('title status priority dueDate assignedTo')   // projection
+  .lean()                                                // ← خروجی plain
+  .exec();</code></pre>
+
+      <p><strong>ب)</strong> اگر offset pagination لازم است: hint مناسب index بده، یا تخمین count با <code class="inline">estimatedDocumentCount</code>.</p>
+    </article>
+
+    <!-- 2.8 -->
+    <article class="issue high">
+      <div class="issue-header">
+        <h3>۲.۸ — populate در hot path Queue Processor</h3>
+        <span class="badge high">HIGH</span>
+      </div>
+      <div class="issue-meta"><span class="file">src/queue/queue.processor.ts:27-31</span></div>
+
+      <h4><span class="icon">🔥</span>مشکل</h4>
+      <p>processor فقط <code class="inline">_id</code> لازم دارد، اما کل user object را populate می‌کند. روی هزاران job در ساعت = هزاران کوئری اضافی.</p>
+
+      <h4><span class="icon">🛠️</span>راه‌حل</h4>
+      <pre class="good"><code>const task = await this.taskModel
+  .findById(taskId)
+  .select('title dueDate userId assignedTo')   // فقط فیلدهای لازم
+  .lean()
+  .exec();
+
+if (!task) return;
+
+const ownerId = task.userId.toString();
+await this.notificationsGateway.notifyDeadlineReminder(ownerId, {
+  taskId, title: task.title, dueDate: task.dueDate
+});</code></pre>
+    </article>
+  </section>
+
+  <!-- ============================ MEDIUM ============================ -->
+  <section class="chapter" id="medium">
+    <h2><span class="num">3</span>مشکلات Medium</h2>
+    <p class="lede">امضاهای bad-practice که با کم‌ترین تلاش می‌توان پاکسازی کرد.</p>
+
+    <!-- 3.1 TS strict -->
+    <article class="issue medium">
+      <div class="issue-header">
+        <h3>۳.۱ — TypeScript عملاً strict نیست</h3>
+        <span class="badge medium">MEDIUM</span>
+      </div>
+      <div class="issue-meta"><span class="file">tsconfig.json</span></div>
+
+      <h4><span class="icon">🔥</span>مشکل</h4>
+      <pre class="bad"><code>{
+  "strictNullChecks": true,
+  "noImplicitAny": false,           // ← خاموش
+  "strictBindCallApply": false      // ← خاموش
+  // strict: ...                    // ← اصلاً وجود ندارد
+}</code></pre>
+
+      <p>نتیجه: <code class="inline">Model&lt;any&gt;</code>, <code class="inline">as any</code> در hot path، type unsafety در runtime.</p>
+
+      <h4><span class="icon">🛠️</span>راه‌حل</h4>
+      <pre class="good"><code>{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true
+  }
+}</code></pre>
+
+      <p><span class="label">سپس</span> هر <code class="inline">any</code> را بهینه کن:</p>
+      <pre class="good"><code>// قبل
+const ownerId = (task.userId as any)._id.toString();
+
+// بعد — با Mongoose PopulatedDoc
+import { PopulatedDoc, Types } from 'mongoose';
+
+@Prop({ type: Types.ObjectId, ref: 'User', required: true })
+userId: PopulatedDoc&lt;UserDocument&gt;;
+
+// در processor
+const userDoc = task.userId as UserDocument; // type-safe چون populate شده
+const ownerId = userDoc._id.toString();</code></pre>
+    </article>
+
+    <!-- 3.2 config validation -->
+    <article class="issue medium">
+      <div class="issue-header">
+        <h3>۳.۲ — Validation روی متغیرهای محیطی نیست</h3>
+        <span class="badge medium">MEDIUM</span>
+      </div>
+      <div class="issue-meta"><span class="file">src/app.module.ts:21-24</span></div>
+
+      <h4><span class="icon">🔥</span>مشکل</h4>
+      <p>اگر <code class="inline">JWT_SECRET</code> در محیط نباشد، app start می‌شود و در runtime روی اولین login می‌ترکد.</p>
+
+      <h4><span class="icon">🛠️</span>راه‌حل با Joi</h4>
+      <pre class="good"><code>npm install joi</code></pre>
+
+      <pre class="good"><code>// src/config/env.validation.ts
+import * as Joi from 'joi';
+
+export const envValidationSchema = Joi.object({
+  NODE_ENV: Joi.string().valid('development', 'staging', 'production').required(),
+  PORT: Joi.number().port().default(3000),
+  MONGODB_URI: Joi.string().uri({ scheme: ['mongodb', 'mongodb+srv'] }).required(),
+  JWT_SECRET: Joi.string().min(32).required(),
+  JWT_EXPIRES_IN: Joi.string().default('15m'),
+  REFRESH_EXPIRES_IN: Joi.string().default('7d'),
+  REDIS_HOST: Joi.string().required(),
+  REDIS_PORT: Joi.number().port().default(6379),
+  WS_CORS_ORIGIN: Joi.string().required(),
+});</code></pre>
+
+      <pre class="good"><code>// src/app.module.ts
+ConfigModule.forRoot({
+  isGlobal: true,
+  validationSchema: envValidationSchema,
+  validationOptions: { abortEarly: false },
+}),</code></pre>
+    </article>
+
+    <!-- 3.3 Mongoose schemas -->
+    <article class="issue medium">
+      <div class="issue-header">
+        <h3>۳.۳ — Schema ها <code class="inline">timestamps: true</code> ندارند و index ها ناقص‌اند</h3>
+        <span class="badge medium">MEDIUM</span>
+      </div>
+      <div class="issue-meta">
+        <span class="file">src/tasks/schemas/task.schema.ts</span>
+        <span class="file">src/activity-log/schemas/activity-log.schema.ts</span>
+      </div>
+
+      <h4><span class="icon">🔥</span>مشکل</h4>
+      <ul>
+        <li><code class="inline">createdAt</code> manual است، <code class="inline">updatedAt</code> اصلاً نیست.</li>
+        <li>ActivityLog با query <code class="inline">{taskId} sort timestamp:-1</code> اجرا می‌شود اما index کامپاند ندارد.</li>
+        <li>Comment / Attachment روی content / filename هیچ length limit ندارند → DoS.</li>
+      </ul>
+
+      <h4><span class="icon">🛠️</span>راه‌حل</h4>
+      <pre class="good"><code>@Schema({ timestamps: true })   // ← createdAt, updatedAt خودکار
+export class Task { ... }
+
+// activity-log.schema.ts
+ActivityLogSchema.index({ taskId: 1, timestamp: -1 });
+
+// comment.schema.ts
+@Prop({ required: true, maxlength: 2000 })
+content: string;
+
+// attachment.schema.ts
+@Prop({ required: true, maxlength: 255 })
+filename: string;
+
+@Prop({ required: true, max: 50 * 1024 * 1024 })  // 50 MB
+size: number;</code></pre>
+    </article>
+
+    <!-- 3.4 Cache invalidation -->
+    <article class="issue medium">
+      <div class="issue-header">
+        <h3>۳.۴ — Cache بدون invalidation و در حافظه</h3>
+        <span class="badge medium">MEDIUM</span>
+      </div>
+      <div class="issue-meta">
+        <span class="file">src/app.module.ts</span>
+        <span class="file">src/reports/reports.service.ts</span>
+      </div>
+
+      <h4><span class="icon">🛠️</span>راه‌حل</h4>
+      <p><strong>الف)</strong> Cache در Redis (نه memory):</p>
+      <pre class="good"><code>npm install @keyv/redis cacheable</code></pre>
+      <pre class="good"><code>CacheModule.registerAsync({
+  isGlobal: true,
+  useFactory: () => ({
+    stores: [createKeyv(process.env.REDIS_URL)],
+    ttl: 60_000,
+  }),
+}),</code></pre>
+
+      <p><strong>ب)</strong> روی mutation ها cache را invalidate کن:</p>
+      <pre class="good"><code>async update(...) {
+  const updated = await this.taskModel.findOneAndUpdate(...);
+  await Promise.all([
+    this.cache.del(`report:overdue:${userId}`),
+    this.cache.del(`report:completed-per-user`),
+  ]);
+  return updated;
+}</code></pre>
+    </article>
+
+    <!-- 3.5 Throttler scope -->
+    <article class="issue medium">
+      <div class="issue-header">
+        <h3>۳.۵ — Throttler فقط HTTP را پوشش می‌دهد</h3>
+        <span class="badge medium">MEDIUM</span>
+      </div>
+      <h4><span class="icon">🛠️</span>راه‌حل</h4>
+      <ul>
+        <li>روی mutation ها throttle محکم‌تر بگذار: <code class="inline">@Throttle({ default: { limit: 30, ttl: 60_000 } })</code></li>
+        <li>روی WebSocket یک <code class="inline">SocketRateLimitGuard</code> با token bucket بساز که per-user event/sec را محدود کند.</li>
+        <li>روی queue producer هم limit per-user بگذار (مثلاً نهایتاً 50 task در دقیقه).</li>
+      </ul>
+    </article>
+
+    <!-- 3.6 main.ts hardening -->
+    <article class="issue medium">
+      <div class="issue-header">
+        <h3>۳.۶ — <code class="inline">main.ts</code> فاقد Production Hardening</h3>
+        <span class="badge medium">MEDIUM</span>
+      </div>
+      <div class="issue-meta"><span class="file">src/main.ts</span></div>
+
+      <h4><span class="icon">🛠️</span>نسخه‌ی production-grade</h4>
+      <pre class="good"><code>import { NestFactory } from '@nestjs/core';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
+import compression from 'compression';
+import { Logger } from 'nestjs-pino';
+import { AppModule } from './app.module';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { RedisIoAdapter } from './gateway/redis-io.adapter';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+  });
+
+  // Logger ساختاریافته (pino)
+  app.useLogger(app.get(Logger));
+
+  // Security headers
+  app.use(helmet());
+  app.use(compression());
+  app.set('trust proxy', 1);
+
+  // CORS
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN.split(','),
+    credentials: true,
+  });
+
+  // Versioning
+  app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
+
+  // Validation + Filter سراسری
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+    transformOptions: { enableImplicitConversion: true },
+  }));
+  app.useGlobalFilters(new HttpExceptionFilter());
+
+  // Graceful shutdown
+  app.enableShutdownHooks();
+
+  // WS Redis Adapter
+  const adapter = new RedisIoAdapter(app);
+  await adapter.connectToRedis(process.env.REDIS_URL);
+  app.useWebSocketAdapter(adapter);
+
+  // Swagger only in non-prod
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Task Management API')
+      .addBearerAuth()
+      .build();
+    SwaggerModule.setup('api', app, SwaggerModule.createDocument(app, config));
+  }
+
+  await app.listen(process.env.PORT ?? 3000);
+}
+bootstrap();</code></pre>
+    </article>
+
+    <!-- 3.7 -->
+    <article class="issue medium">
+      <div class="issue-header">
+        <h3>۳.۷ — Health checks وجود ندارد</h3>
+        <span class="badge medium">MEDIUM</span>
+      </div>
+      <h4><span class="icon">🛠️</span>راه‌حل با @nestjs/terminus</h4>
+      <pre class="good"><code>npm install @nestjs/terminus</code></pre>
+      <pre class="good"><code>// src/health/health.controller.ts
+@Controller('health')
+export class HealthController {
+  constructor(
+    private health: HealthCheckService,
+    private mongo: MongooseHealthIndicator,
+    private memory: MemoryHealthIndicator,
+  ) {}
+
+  @Get()
+  @HealthCheck()
+  check() {
+    return this.health.check([
+      () => this.mongo.pingCheck('mongo'),
+      () => this.memory.checkHeap('heap', 300 * 1024 * 1024),
+    ]);
+  }
+
+  @Get('ready')
+  @HealthCheck()
+  ready() {
+    return this.health.check([
+      () => this.mongo.pingCheck('mongo'),
+    ]);
+  }
+}</code></pre>
+    </article>
+  </section>
+
+  <!-- ============================ LOW ============================ -->
+  <section class="chapter" id="low">
+    <h2><span class="num">4</span>مشکلات Low / Code Smells</h2>
+
+    <article class="issue low">
+      <div class="issue-header">
+        <h3>۴.۱ — فایل dead: <code class="inline">tasks.gateway.ts</code></h3>
+        <span class="badge low">LOW</span>
+      </div>
+      <div class="issue-meta"><span class="file">src/gateway/tasks.gateway.ts</span></div>
+      <p>این فایل یک stub با چند TODO خالی است که در هیچ module ای register نشده است. حذفش کن.</p>
+      <pre class="good"><code>rm src/gateway/tasks.gateway.ts</code></pre>
+    </article>
+
+    <article class="issue low">
+      <div class="issue-header">
+        <h3>۴.۲ — Dependency bloat</h3>
+        <span class="badge low">LOW</span>
+      </div>
+      <p>
+        هم <code class="inline">@nestjs/bull</code> (legacy) هم <code class="inline">bullmq</code> هم <code class="inline">bull</code> هم <code class="inline">ioredis</code> در dependencies هست.
+        فقط یک قلم استفاده می‌شود. تصمیم بگیر BullMQ (مدرن) یا Bull (legacy)، بقیه را حذف کن.
+        پیشنهاد: BullMQ.
+      </p>
+      <pre class="good"><code>npm uninstall @nestjs/bull bull
+npm install @nestjs/bullmq</code></pre>
+    </article>
+
+    <article class="issue low">
+      <div class="issue-header">
+        <h3>۴.۳ — Endpoint <code class="inline">getHello</code> در production</h3>
+        <span class="badge low">LOW</span>
+      </div>
+      <p>حذف کن یا با <code class="inline">/health</code> جایگزین کن.</p>
+    </article>
+
+    <article class="issue low">
+      <div class="issue-header">
+        <h3>۴.۴ — <code class="inline">removeOnFail: false</code> در صف</h3>
+        <span class="badge low">LOW</span>
+      </div>
+      <div class="issue-meta"><span class="file">src/queue/queue.service.ts:33</span></div>
+      <p>job های failed برای همیشه در Redis می‌مانند → memory bloat.</p>
+      <pre class="good"><code>removeOnFail: { age: 7 * 24 * 3600, count: 1000 }</code></pre>
+    </article>
+  </section>
+
+  <!-- ============================ PRODUCTION ============================ -->
+  <section class="chapter" id="production">
+    <h2><span class="num">5</span>آماده‌سازی Production</h2>
+    <p class="lede">آنچه فعلاً وجود ندارد و بدون آن هیچ سیستمی نباید زنده شود.</p>
+
+    <article class="issue medium">
+      <div class="issue-header"><h3>۵.۱ — Logger ساختاریافته (Structured Logging)</h3></div>
+      <p>الان فقط <code class="inline">Logger.log(...)</code> با خروجی متنی است. در production نیاز به JSON structured log داری تا با Loki/Datadog/CloudWatch parse شود.</p>
+      <pre class="good"><code>npm install nestjs-pino pino-http</code></pre>
+      <pre class="good"><code>// app.module.ts
+LoggerModule.forRoot({
+  pinoHttp: {
+    level: process.env.LOG_LEVEL ?? 'info',
+    redact: ['req.headers.authorization', 'req.headers.cookie'],
+    serializers: {
+      req: (req) => ({ id: req.id, method: req.method, url: req.url }),
+    },
+    customProps: () => ({ service: 'task-manager' }),
+  },
+}),</code></pre>
+    </article>
+
+    <article class="issue medium">
+      <div class="issue-header"><h3>۵.۲ — Distributed Tracing با OpenTelemetry</h3></div>
+      <pre class="good"><code>npm install @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node</code></pre>
+      <pre class="good"><code>// src/tracing.ts (قبل از import AppModule در main.ts)
+import { NodeSDK } from '@opentelemetry/sdk-node';
+import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+
+new NodeSDK({
+  traceExporter: new OTLPTraceExporter({ url: process.env.OTEL_ENDPOINT }),
+  instrumentations: [getNodeAutoInstrumentations()],
+}).start();</code></pre>
+    </article>
+
+    <article class="issue medium">
+      <div class="issue-header"><h3>۵.۳ — Metrics با Prometheus</h3></div>
+      <pre class="good"><code>npm install prom-client @willsoto/nestjs-prometheus</code></pre>
+      <pre class="good"><code>PrometheusModule.register({ defaultMetrics: { enabled: true } })</code></pre>
+      <p>سپس endpoint <code class="inline">/metrics</code> در دسترس می‌شود. Prometheus scrape می‌کند، Grafana dashboard می‌سازد.</p>
+    </article>
+
+    <article class="issue medium">
+      <div class="issue-header"><h3>۵.۴ — Dockerfile چندمرحله‌ای صحیح</h3></div>
+      <pre class="bad"><code># فعلی (مشکل: production deps + dev deps هر دو copy می‌شوند)
+COPY --from=builder /app/node_modules ./node_modules</code></pre>
+      <pre class="good"><code># مرحله ۱: deps فقط production
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# مرحله ۲: build
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+# مرحله ۳: runtime
+FROM node:20-alpine AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
+USER node
+COPY --from=deps    /app/node_modules ./node_modules
+COPY --from=builder /app/dist          ./dist
+COPY package*.json ./
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD wget -qO- http://localhost:3000/health || exit 1
+CMD ["node", "dist/main"]</code></pre>
+    </article>
+
+    <article class="issue medium">
+      <div class="issue-header"><h3>۵.۵ — CI/CD Pipeline (GitHub Actions)</h3></div>
+      <pre class="good"><code># .github/workflows/ci.yml
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mongo:  { image: mongo:7,         ports: ['27017:27017'] }
+      redis:  { image: redis:7-alpine,  ports: ['6379:6379']   }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: 'npm' }
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test -- --coverage
+      - run: npm run test:e2e
+      - uses: codecov/codecov-action@v4
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npx audit-ci --high
+      - uses: aquasecurity/trivy-action@master
+        with: { scan-type: 'fs', scan-ref: '.' }</code></pre>
+    </article>
+  </section>
+
+  <!-- ============================ TESTING ============================ -->
+  <section class="chapter" id="testing">
+    <h2><span class="num">6</span>استراتژی تست</h2>
+    <p class="lede">پروژه فعلاً فقط <code class="inline">Hello World</code> را تست می‌کند. این یک red flag بزرگ برای senior signal است.</p>
+
+    <article class="issue high">
+      <div class="issue-header"><h3>۶.۱ — تست‌هایی که حتماً باید بنویسی</h3></div>
+
+      <h4>الف) Unit Test برای Optimistic Lock</h4>
+      <pre class="good"><code>describe('TasksService.update', () => {
+  it('throws ConflictException when version mismatches', async () => {
+    const task = await service.create(userId, dto);
+    await expect(
+      service.update(task._id, userId, { ...dto, version: 999 })
+    ).rejects.toThrow(ConflictException);
+  });
+
+  it('handles concurrent updates correctly', async () => {
+    const task = await service.create(userId, dto);
+    const [r1, r2] = await Promise.allSettled([
+      service.update(task._id, userId, { title: 'A', version: 0 }),
+      service.update(task._id, userId, { title: 'B', version: 0 }),
+    ]);
+    const fulfilled = [r1, r2].filter(r => r.status === 'fulfilled');
+    const rejected  = [r1, r2].filter(r => r.status === 'rejected');
+    expect(fulfilled).toHaveLength(1);
+    expect(rejected).toHaveLength(1);
+  });
+});</code></pre>
+
+      <h4>ب) Test برای Queue jobId Dedup</h4>
+      <pre class="good"><code>it('skips duplicate deadline jobs', async () => {
+  await service.scheduleDeadlineJob(task);
+  await service.scheduleDeadlineJob(task);
+  const jobs = await queue.getDelayed();
+  expect(jobs).toHaveLength(1);
+});</code></pre>
+
+      <h4>ج) Test برای WS Auth Reject</h4>
+      <pre class="good"><code>it('disconnects client without token', async () => {
+  const client = io(url);  // بدون token
+  await new Promise(resolve => client.on('disconnect', resolve));
+  expect(client.connected).toBe(false);
+});</code></pre>
+
+      <h4>د) E2E Test برای IDOR</h4>
+      <pre class="good"><code>it('prevents user A from commenting on user B task', async () => {
+  const taskOfB = await createTaskAs(userB);
+  await request(app.getHttpServer())
+    .post(`/tasks/${taskOfB._id}/comments`)
+    .set('Authorization', `Bearer ${tokenA}`)
+    .send({ content: 'hack' })
+    .expect(404);   // یا 403
+});</code></pre>
+
+      <div class="tip"><strong>هدف:</strong> coverage ≥ 70% روی service layer، 100% روی auth و authorization path ها.</div>
+    </article>
+  </section>
+
+  <!-- ============================ CHECKLIST ============================ -->
+  <section class="chapter" id="checklist">
+    <h2><span class="num">7</span>چک‌لیست نهایی قبل از مصاحبه</h2>
+    <p class="lede">اولویت‌بندی شده. اگر فقط یک هفته داری، این ترتیب را رعایت کن.</p>
+
+    <div class="checklist">
+      <h3>روز ۱ — Security First</h3>
+      <ul>
+        <li><div class="check"></div><div><strong>پاک کردن <code class="inline">.env</code> و <code class="inline">dist/</code> از Git history</strong> + rotate JWT secret + .gitignore استاندارد <span class="badge critical priority">CRITICAL</span></div></li>
+        <li><div class="check"></div><div><strong>WebSocket Auth با JWT</strong> — Guard + handshake validation <span class="badge critical priority">CRITICAL</span></div></li>
+        <li><div class="check"></div><div><strong>Refresh Token rotation</strong> + access TTL کوتاه <span class="badge critical priority">CRITICAL</span></div></li>
+      </ul>
+    </div>
+    <br/>
+    <div class="checklist">
+      <h3>روز ۲ — Authorization & Concurrency</h3>
+      <ul>
+        <li><div class="check"></div><div>Authorization check در Comments / Attachments / ActivityLog (helper مشترک <code class="inline">assertUserCanAccessTask</code>) <span class="badge high priority">HIGH</span></div></li>
+        <li><div class="check"></div><div>Optimistic lock در <code class="inline">assignTask</code> اضافه کن <span class="badge high priority">HIGH</span></div></li>
+        <li><div class="check"></div><div>Race در update — یک atomic <code class="inline">findOneAndUpdate</code> با <code class="inline">{new: true}</code> <span class="badge high priority">HIGH</span></div></li>
+        <li><div class="check"></div><div>Reports → scope per-user یا RBAC، date range bound <span class="badge high priority">HIGH</span></div></li>
+      </ul>
+    </div>
+    <br/>
+    <div class="checklist">
+      <h3>روز ۳ — Scaling & Performance</h3>
+      <ul>
+        <li><div class="check"></div><div>Redis Adapter برای Socket.IO + حذف <code class="inline">userSocketMap</code> <span class="badge critical priority">CRITICAL</span></div></li>
+        <li><div class="check"></div><div>Cache preferences با invalidation <span class="badge medium priority">MEDIUM</span></div></li>
+        <li><div class="check"></div><div>Pagination با projection + lean + cursor <span class="badge medium priority">MEDIUM</span></div></li>
+        <li><div class="check"></div><div>حذف populate از processor <span class="badge medium priority">MEDIUM</span></div></li>
+      </ul>
+    </div>
+    <br/>
+    <div class="checklist">
+      <h3>روز ۴ — Quality</h3>
+      <ul>
+        <li><div class="check"></div><div><code class="inline">strict: true</code> در tsconfig + پاکسازی <code class="inline">any</code> ها <span class="badge medium priority">MEDIUM</span></div></li>
+        <li><div class="check"></div><div>Joi schema برای env validation <span class="badge medium priority">MEDIUM</span></div></li>
+        <li><div class="check"></div><div><code class="inline">timestamps: true</code> + compound indexes + length constraints <span class="badge medium priority">MEDIUM</span></div></li>
+        <li><div class="check"></div><div>حذف <code class="inline">tasks.gateway.ts</code> dead code + dependency cleanup <span class="badge low priority">LOW</span></div></li>
+      </ul>
+    </div>
+    <br/>
+    <div class="checklist">
+      <h3>روز ۵ — Production Hardening</h3>
+      <ul>
+        <li><div class="check"></div><div>helmet + cors whitelist + compression + trust proxy <span class="badge medium priority">MEDIUM</span></div></li>
+        <li><div class="check"></div><div><code class="inline">enableShutdownHooks</code> + graceful disconnect <span class="badge medium priority">MEDIUM</span></div></li>
+        <li><div class="check"></div><div><code class="inline">/health</code> + <code class="inline">/ready</code> با Terminus <span class="badge medium priority">MEDIUM</span></div></li>
+        <li><div class="check"></div><div>Pino structured logging <span class="badge medium priority">MEDIUM</span></div></li>
+        <li><div class="check"></div><div>Dockerfile چندمرحله‌ای + non-root user <span class="badge medium priority">MEDIUM</span></div></li>
+      </ul>
+    </div>
+    <br/>
+    <div class="checklist">
+      <h3>روز ۶ — Testing</h3>
+      <ul>
+        <li><div class="check"></div><div>۵ تست با کیفیت: optimistic-lock، queue dedup، assignTask race، WS auth reject، IDOR e2e <span class="badge high priority">HIGH</span></div></li>
+        <li><div class="check"></div><div>پوشش حداقلی ≥ ۶۰٪ روی services <span class="badge high priority">HIGH</span></div></li>
+      </ul>
+    </div>
+    <br/>
+    <div class="checklist">
+      <h3>روز ۷ — DevEx & Docs</h3>
+      <ul>
+        <li><div class="check"></div><div>GitHub Actions CI با lint + test + build + audit <span class="badge medium priority">MEDIUM</span></div></li>
+        <li><div class="check"></div><div>README کامل با architecture diagram، trade-off ها، چه چیزهایی left for future <span class="badge low priority">LOW</span></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================ FINAL VERDICT ============================ -->
+  <section class="chapter" id="verdict">
+    <h2><span class="num">8</span>حکم نهایی</h2>
+    <div class="verdict">
+      <h2>اگر من Tech Lead باشم…</h2>
+
+      <div class="verdict-grid reject">
+        <div>
+          <h4>❌ برای Senior Backend Role: REJECT</h4>
+          <p style="color: var(--text-soft); font-size: 14px;">
+            چندین مسئله نشان می‌دهد candidate تجربه‌ی واقعی operational ندارد:
+          </p>
+          <ul style="margin-top: 10px;">
+            <li>secret committed در repo</li>
+            <li>WebSocket کاملاً unauthenticated</li>
+            <li>IDOR در ۳ endpoint مختلف</li>
+            <li>in-memory state در کنار ادعای "scalable"</li>
+            <li>صفر test برای feature هایی که روی README ادعا شده</li>
+            <li>نبود health/metrics/tracing/graceful shutdown</li>
+          </ul>
+        </div>
+        <div>
+          <h4>❌ Why senior signal weak</h4>
+          <p style="color: var(--text-soft); font-size: 14px;">
+            Senior یعنی کسی که از قبل می‌داند helmet، tracing، strict TS، authz consistency،
+            و WS auth reflexively لازم‌اند. اینجا این reflex وجود ندارد.
+          </p>
+        </div>
+      </div>
+
+      <div class="verdict-grid accept">
+        <div>
+          <h4>✅ برای Junior-to-Mid Role: PASS با reservation</h4>
+          <p style="color: var(--text-soft); font-size: 14px;">شواهد مثبت قابل اعتنا:</p>
+          <ul style="margin-top: 10px;">
+            <li>تسلط بر NestJS DI، module، DTO، validation، swagger</li>
+            <li>پیاده‌سازی صحیح optimistic locking در update path</li>
+            <li>BullMQ jobId pattern برای deadline dedup</li>
+            <li>Aggregation pipeline برای reports</li>
+            <li>تعریف compound indexes</li>
+            <li>Global exception filter, throttler, cache module</li>
+          </ul>
+        </div>
+        <div>
+          <h4>📈 Path to Strong Mid Submission</h4>
+          <p style="color: var(--text-soft); font-size: 14px;">
+            با اجرای کامل چک‌لیست بالا (۱ هفته)، این کد به یک submission قوی mid-level قابل تبدیل است.
+            با ۱ ماه تمرکز بیشتر روی observability و real-world load testing،
+            می‌تواند به sample work برای junior-senior rebrand شود.
+          </p>
+        </div>
+      </div>
+
+      <h2 style="margin-top: 36px;">خط آخر</h2>
+      <p style="font-size: 16px; color: var(--text-soft); line-height: 2;">
+        این کد یک <strong>solid take-home assignment</strong> است که نشان می‌دهد چارچوب NestJS را خوب می‌فهمی.
+        ولی <strong>production-grade نیست</strong>. تفاوت بین این کد و یک سیستم production در نگاه به ۸ نکته است:
+        <em>auth، scaling، authz consistency، observability، graceful lifecycle، testing، config validation، و defense-in-depth</em>.
+        این هشت مفهوم را جذب کن، یک هفته زمان بگذار، و نتیجه‌ی نهایی را به‌عنوان رزومه‌ی فنی قابل دفاع نشان بده.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    <p>گزارش Audit · تهیه شده با دیدگاه Senior Staff Engineer · بر اساس کد واقعی پروژه</p>
+    <p style="margin-top: 6px;">هر مشکل = یک فرصت یادگیری. حل آنها مستقیم سطح فنی تو را بالا می‌برد.</p>
+  </footer>
+
+</div>
+</body>
+</html>

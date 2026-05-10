@@ -78,7 +78,10 @@ export class AuthService {
     await this.refreshTokenModel.deleteOne({ tokenHash }).exec();
   }
 
-  private async issueTokenPair(user: UserDocument, family?: string): Promise<TokenPairDto> {
+  private async issueTokenPair(
+    user: UserDocument,
+    family?: string,
+  ): Promise<TokenPairDto> {
     const accessToken = this.jwtService.sign(
       { sub: user._id, email: user.email },
       { expiresIn: '15m' },

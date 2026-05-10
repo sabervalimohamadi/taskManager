@@ -1,7 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { TasksService } from '../tasks/tasks.service';
@@ -10,7 +7,8 @@ import { Comment, CommentDocument } from './schemas/comment.schema';
 @Injectable()
 export class CommentsService {
   constructor(
-    @InjectModel(Comment.name) private readonly commentModel: Model<CommentDocument>,
+    @InjectModel(Comment.name)
+    private readonly commentModel: Model<CommentDocument>,
     private readonly tasksService: TasksService,
   ) {}
 
@@ -29,7 +27,10 @@ export class CommentsService {
     return comment.save();
   }
 
-  async getComments(taskId: string, userId: string): Promise<CommentDocument[]> {
+  async getComments(
+    taskId: string,
+    userId: string,
+  ): Promise<CommentDocument[]> {
     await this.tasksService.assertUserCanAccessTask(taskId, userId);
 
     return this.commentModel
@@ -46,7 +47,9 @@ export class CommentsService {
     }
 
     if (comment.userId.toString() !== userId) {
-      throw new ForbiddenException('Only the comment author can delete this comment');
+      throw new ForbiddenException(
+        'Only the comment author can delete this comment',
+      );
     }
     await comment.deleteOne();
   }

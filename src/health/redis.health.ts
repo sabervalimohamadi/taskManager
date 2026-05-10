@@ -16,7 +16,12 @@ export class RedisHealthIndicator extends HealthIndicator {
   async isHealthy(key: string): Promise<HealthIndicatorResult> {
     const host = this.configService.get<string>('REDIS_HOST', 'localhost');
     const port = this.configService.get<number>('REDIS_PORT', 6379);
-    const client = new Redis({ host, port, lazyConnect: true, connectTimeout: 3000 });
+    const client = new Redis({
+      host,
+      port,
+      lazyConnect: true,
+      connectTimeout: 3000,
+    });
 
     try {
       await client.connect();

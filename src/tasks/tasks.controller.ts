@@ -37,16 +37,43 @@ export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List tasks owned by or assigned to the current user' })
+  @ApiOperation({
+    summary: 'List tasks owned by or assigned to the current user',
+  })
   @ApiQuery({ name: 'status', enum: TaskStatus, required: false })
   @ApiQuery({ name: 'priority', enum: TaskPriority, required: false })
-  @ApiQuery({ name: 'assignedTo', required: false, description: 'Filter by assigned user ID' })
-  @ApiQuery({ name: 'dueDateFrom', required: false, description: 'ISO 8601 lower bound' })
-  @ApiQuery({ name: 'dueDateTo', required: false, description: 'ISO 8601 upper bound' })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default 1)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default 10, max 100)' })
+  @ApiQuery({
+    name: 'assignedTo',
+    required: false,
+    description: 'Filter by assigned user ID',
+  })
+  @ApiQuery({
+    name: 'dueDateFrom',
+    required: false,
+    description: 'ISO 8601 lower bound',
+  })
+  @ApiQuery({
+    name: 'dueDateTo',
+    required: false,
+    description: 'ISO 8601 upper bound',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default 10, max 100)',
+  })
   @ApiResponse({ status: 200, description: 'Paginated task list' })
-  findAll(@CurrentUser() user: { userId: string }, @Query() query: QueryTaskDto) {
+  findAll(
+    @CurrentUser() user: { userId: string },
+    @Query() query: QueryTaskDto,
+  ) {
     return this.tasksService.findAll(user.userId, query);
   }
 
@@ -62,12 +89,17 @@ export class TasksController {
   @ApiParam({ name: 'id', description: 'Task ObjectId' })
   @ApiResponse({ status: 200, description: 'Task found' })
   @ApiResponse({ status: 404, description: 'Task not found' })
-  findOne(@Param('id', ParseMongoIdPipe) id: string, @CurrentUser() user: { userId: string }) {
+  findOne(
+    @Param('id', ParseMongoIdPipe) id: string,
+    @CurrentUser() user: { userId: string },
+  ) {
     return this.tasksService.findOne(id, user.userId);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a task (requires current version for optimistic locking)' })
+  @ApiOperation({
+    summary: 'Update a task (requires current version for optimistic locking)',
+  })
   @ApiParam({ name: 'id', description: 'Task ObjectId' })
   @ApiResponse({ status: 200, description: 'Task updated' })
   @ApiResponse({ status: 404, description: 'Task not found' })
@@ -87,7 +119,10 @@ export class TasksController {
   @ApiResponse({ status: 204, description: 'Task deleted' })
   @ApiResponse({ status: 403, description: 'Not the task owner' })
   @ApiResponse({ status: 404, description: 'Task not found' })
-  remove(@Param('id', ParseMongoIdPipe) id: string, @CurrentUser() user: { userId: string }) {
+  remove(
+    @Param('id', ParseMongoIdPipe) id: string,
+    @CurrentUser() user: { userId: string },
+  ) {
     return this.tasksService.remove(id, user.userId);
   }
 

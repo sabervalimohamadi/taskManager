@@ -26,7 +26,11 @@ export class User {
       taskAssigned: { type: Boolean, default: true },
       taskUpdated: { type: Boolean, default: true },
     },
-    default: () => ({ deadlineReminders: true, taskAssigned: true, taskUpdated: true }),
+    default: () => ({
+      deadlineReminders: true,
+      taskAssigned: true,
+      taskUpdated: true,
+    }),
   })
   notificationPreferences!: NotificationPreferences;
 

@@ -35,7 +35,8 @@ export class UsersService {
   ): Promise<UserDocument | null> {
     const update: Record<string, boolean> = {};
     if (dto.deadlineReminders !== undefined) {
-      update['notificationPreferences.deadlineReminders'] = dto.deadlineReminders;
+      update['notificationPreferences.deadlineReminders'] =
+        dto.deadlineReminders;
     }
     if (dto.taskAssigned !== undefined) {
       update['notificationPreferences.taskAssigned'] = dto.taskAssigned;

@@ -7,7 +7,9 @@ export class AssignTaskDto {
   @IsNotEmpty()
   assigneeId: string;
 
-  @ApiProperty({ description: 'Current task version for optimistic concurrency check' })
+  @ApiProperty({
+    description: 'Current task version for optimistic concurrency check',
+  })
   @IsInt()
   @Min(0)
   @IsDefined()

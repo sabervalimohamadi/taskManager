@@ -19,14 +19,19 @@ export class ReportsController {
 
   @Get('completed-per-user')
   @ApiOperation({ summary: 'Get completed task count for the current user' })
-  @ApiResponse({ status: 200, description: 'Completed task count for current user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Completed task count for current user',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   getCompletedTasksPerUser(@CurrentUser() user: { userId: string }) {
     return this.reportsService.getCompletedTasksPerUser(user.userId);
   }
 
   @Get('completed-over-time')
-  @ApiOperation({ summary: 'Get completed tasks grouped by day within a date range' })
+  @ApiOperation({
+    summary: 'Get completed tasks grouped by day within a date range',
+  })
   @ApiResponse({ status: 200, description: 'Completed tasks grouped by day' })
   @ApiResponse({ status: 400, description: 'Invalid or out-of-range dates' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

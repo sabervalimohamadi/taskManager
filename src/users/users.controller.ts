@@ -18,7 +18,9 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Patch('preferences')
-  @ApiOperation({ summary: 'Update notification preferences for the current user' })
+  @ApiOperation({
+    summary: 'Update notification preferences for the current user',
+  })
   @ApiResponse({ status: 200, description: 'Preferences updated' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   updatePreferences(

@@ -1,7 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { TasksService } from '../tasks/tasks.service';
@@ -11,7 +8,8 @@ import { Attachment, AttachmentDocument } from './schemas/attachment.schema';
 @Injectable()
 export class AttachmentsService {
   constructor(
-    @InjectModel(Attachment.name) private readonly attachmentModel: Model<AttachmentDocument>,
+    @InjectModel(Attachment.name)
+    private readonly attachmentModel: Model<AttachmentDocument>,
     private readonly tasksService: TasksService,
   ) {}
 
@@ -30,7 +28,10 @@ export class AttachmentsService {
     return attachment.save();
   }
 
-  async getAttachments(taskId: string, userId: string): Promise<AttachmentDocument[]> {
+  async getAttachments(
+    taskId: string,
+    userId: string,
+  ): Promise<AttachmentDocument[]> {
     await this.tasksService.assertUserCanAccessTask(taskId, userId);
 
     return this.attachmentModel
@@ -45,7 +46,9 @@ export class AttachmentsService {
     }
 
     if (attachment.uploadedBy.toString() !== userId) {
-      throw new ForbiddenException('Only the uploader can delete this attachment');
+      throw new ForbiddenException(
+        'Only the uploader can delete this attachment',
+      );
     }
     await attachment.deleteOne();
   }

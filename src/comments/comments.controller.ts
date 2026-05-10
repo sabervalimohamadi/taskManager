@@ -59,7 +59,10 @@ export class CommentsController {
   @ApiParam({ name: 'commentId', description: 'Comment ObjectId' })
   @ApiResponse({ status: 200, description: 'Comment deleted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden — not the comment author' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden — not the comment author',
+  })
   @ApiResponse({ status: 404, description: 'Comment not found' })
   deleteComment(
     @Param('commentId') commentId: string,

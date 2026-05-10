@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { OutboxEvent, OutboxEventDocument } from './schemas/outbox-event.schema';
+import {
+  OutboxEvent,
+  OutboxEventDocument,
+} from './schemas/outbox-event.schema';
 
 @Injectable()
 export class OutboxService {

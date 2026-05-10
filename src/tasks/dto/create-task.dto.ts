@@ -14,14 +14,18 @@ import { TaskPriority, TaskStatus } from '../schemas/task.schema';
 
 export class CreateTaskDto {
   @ApiProperty({ maxLength: 200 })
-  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
   @IsNotEmpty()
   @MaxLength(200)
   title: string;
 
   @ApiPropertyOptional({ maxLength: 2000 })
-  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
   @MaxLength(2000)
   @IsOptional()

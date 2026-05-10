@@ -33,9 +33,13 @@ import { LoggerModule } from 'nestjs-pino';
         REDIS_HOST: Joi.string().default('localhost'),
         REDIS_PORT: Joi.number().integer().default(6379),
         PORT: Joi.number().integer().default(3000),
-        NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
+        NODE_ENV: Joi.string()
+          .valid('development', 'production', 'test')
+          .default('development'),
         CORS_ORIGINS: Joi.string().default(''),
-        LOG_LEVEL: Joi.string().valid('fatal', 'error', 'warn', 'info', 'debug', 'trace').default('info'),
+        LOG_LEVEL: Joi.string()
+          .valid('fatal', 'error', 'warn', 'info', 'debug', 'trace')
+          .default('info'),
       }),
       validationOptions: { abortEarly: false },
     }),
@@ -77,7 +81,8 @@ import { LoggerModule } from 'nestjs-pino';
     LoggerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
-        const isProduction = configService.get<string>('NODE_ENV') === 'production';
+        const isProduction =
+          configService.get<string>('NODE_ENV') === 'production';
         const level = configService.get<string>('LOG_LEVEL', 'info');
         return {
           pinoHttp: {
@@ -85,7 +90,11 @@ import { LoggerModule } from 'nestjs-pino';
             transport: isProduction
               ? undefined
               : { target: 'pino-pretty', options: { singleLine: true } },
-            redact: ['req.headers.authorization', 'req.body.password', 'req.body.refreshToken'],
+            redact: [
+              'req.headers.authorization',
+              'req.body.password',
+              'req.body.refreshToken',
+            ],
             autoLogging: { ignore: (req) => req.url === '/v1/health/live' },
           },
         };

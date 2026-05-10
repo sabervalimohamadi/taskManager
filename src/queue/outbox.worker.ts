@@ -3,7 +3,10 @@ import { Cron } from '@nestjs/schedule';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Task, TaskDocument } from '../tasks/schemas/task.schema';
-import { OutboxEvent, OutboxEventDocument } from './schemas/outbox-event.schema';
+import {
+  OutboxEvent,
+  OutboxEventDocument,
+} from './schemas/outbox-event.schema';
 import { QueueService } from './queue.service';
 
 const MAX_ATTEMPTS = 5;

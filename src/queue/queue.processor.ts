@@ -39,7 +39,10 @@ export class QueueProcessor extends WorkerHost {
     if (task.assignedTo) {
       const assigneeId = task.assignedTo.toString();
       if (assigneeId !== ownerId) {
-        await this.notificationsGateway.notifyDeadlineReminder(assigneeId, payload);
+        await this.notificationsGateway.notifyDeadlineReminder(
+          assigneeId,
+          payload,
+        );
       }
     }
   }
