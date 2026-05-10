@@ -19,6 +19,7 @@ import { ReportsModule } from './reports/reports.module';
 import { CommentsModule } from './comments/comments.module';
 import { AttachmentsModule } from './attachments/attachments.module';
 import { HealthModule } from './health/health.module';
+import { LoggerModule } from 'nestjs-pino';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { HealthModule } from './health/health.module';
         PORT: Joi.number().integer().default(3000),
         NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
         CORS_ORIGINS: Joi.string().default(''),
+        LOG_LEVEL: Joi.string().valid('fatal', 'error', 'warn', 'info', 'debug', 'trace').default('info'),
       }),
       validationOptions: { abortEarly: false },
     }),
@@ -72,6 +74,24 @@ import { HealthModule } from './health/health.module';
     CommentsModule,
     AttachmentsModule,
     HealthModule,
+    LoggerModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => {
+        const isProduction = configService.get<string>('NODE_ENV') === 'production';
+        const level = configService.get<string>('LOG_LEVEL', 'info');
+        return {
+          pinoHttp: {
+            level,
+            transport: isProduction
+              ? undefined
+              : { target: 'pino-pretty', options: { singleLine: true } },
+            redact: ['req.headers.authorization', 'req.body.password', 'req.body.refreshToken'],
+            autoLogging: { ignore: (req) => req.url === '/v1/health/live' },
+          },
+        };
+      },
+      inject: [ConfigService],
+    }),
   ],
   controllers: [AppController],
   providers: [
