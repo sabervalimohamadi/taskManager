@@ -73,7 +73,14 @@ export class TasksService {
 
     const skip = (page - 1) * limit;
     const [data, total] = await Promise.all([
-      this.taskModel.find(filter).skip(skip).limit(limit).exec(),
+      this.taskModel
+        .find(filter)
+        .select('title description status priority dueDate userId assignedTo version createdAt')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean<TaskDocument[]>()
+        .exec(),
       this.taskModel.countDocuments(filter).exec(),
     ]);
 
