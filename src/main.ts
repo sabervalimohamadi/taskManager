@@ -2,7 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const compression = require('compression') as () => ReturnType<typeof import('compression')>;
+const compression = require('compression') as () => ReturnType<
+  typeof import('compression')
+>;
 import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
@@ -16,7 +18,11 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   // Trust reverse-proxy headers (X-Forwarded-For) so throttler sees real IPs
-  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+  (
+    app.getHttpAdapter().getInstance() as {
+      set: (k: string, v: number) => void;
+    }
+  ).set('trust proxy', 1);
 
   app.use(helmet());
   app.use(compression());
@@ -63,4 +69,4 @@ async function bootstrap() {
   await app.listen(port);
 }
 
-bootstrap();
+void bootstrap();

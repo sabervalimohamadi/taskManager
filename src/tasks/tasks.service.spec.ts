@@ -32,7 +32,10 @@ describe('TasksService', () => {
   const mockActivityLog = { log: jest.fn().mockResolvedValue(undefined) };
   const mockQueue = { scheduleDeadlineJob: jest.fn() };
   const mockOutbox = { enqueue: jest.fn() };
-  const mockGateway = { notifyTaskAssigned: jest.fn(), notifyTaskUpdated: jest.fn() };
+  const mockGateway = {
+    notifyTaskAssigned: jest.fn(),
+    notifyTaskUpdated: jest.fn(),
+  };
   const mockCache = { del: jest.fn().mockResolvedValue(undefined) };
 
   beforeEach(async () => {
@@ -59,7 +62,9 @@ describe('TasksService', () => {
     const userId = new Types.ObjectId().toString();
 
     it('throws ConflictException when version is stale (findOne returns null)', async () => {
-      mockTaskModel.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(null) });
+      mockTaskModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(null),
+      });
 
       await expect(
         service.update(taskId, userId, { version: 5, title: 'x' }),
@@ -69,8 +74,12 @@ describe('TasksService', () => {
     it('throws ConflictException when concurrent writer wins between findOne and findOneAndUpdate', async () => {
       const oldTask = makeTask({ userId: new Types.ObjectId(userId) });
 
-      mockTaskModel.findOne.mockReturnValueOnce({ exec: jest.fn().mockResolvedValue(oldTask) });
-      mockTaskModel.findOneAndUpdate.mockReturnValueOnce({ exec: jest.fn().mockResolvedValue(null) });
+      mockTaskModel.findOne.mockReturnValueOnce({
+        exec: jest.fn().mockResolvedValue(oldTask),
+      });
+      mockTaskModel.findOneAndUpdate.mockReturnValueOnce({
+        exec: jest.fn().mockResolvedValue(null),
+      });
 
       await expect(
         service.update(taskId, userId, { version: 0, title: 'updated' }),
@@ -81,10 +90,17 @@ describe('TasksService', () => {
       const oldTask = makeTask({ userId: new Types.ObjectId(userId) });
       const saved = { ...oldTask, title: 'updated', version: 1 };
 
-      mockTaskModel.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(oldTask) });
-      mockTaskModel.findOneAndUpdate.mockReturnValue({ exec: jest.fn().mockResolvedValue(saved) });
+      mockTaskModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(oldTask),
+      });
+      mockTaskModel.findOneAndUpdate.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(saved),
+      });
 
-      const result = await service.update(taskId, userId, { version: 0, title: 'updated' });
+      const result = await service.update(taskId, userId, {
+        version: 0,
+        title: 'updated',
+      });
       expect(result).toBe(saved);
     });
   });
@@ -93,7 +109,9 @@ describe('TasksService', () => {
 
   describe('assertUserCanAccessTask() — IDOR prevention', () => {
     it('throws NotFoundException when task belongs to a different user', async () => {
-      mockTaskModel.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(null) });
+      mockTaskModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(null),
+      });
 
       await expect(
         service.assertUserCanAccessTask(
@@ -105,7 +123,9 @@ describe('TasksService', () => {
 
     it('returns the task when the requesting user owns it', async () => {
       const task = makeTask();
-      mockTaskModel.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(task) });
+      mockTaskModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(task),
+      });
 
       const result = await service.assertUserCanAccessTask(
         task._id.toString(),
@@ -117,7 +137,9 @@ describe('TasksService', () => {
     it('returns the task when the requesting user is the assignee', async () => {
       const assigneeId = new Types.ObjectId();
       const task = makeTask({ assignedTo: assigneeId });
-      mockTaskModel.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(task) });
+      mockTaskModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(task),
+      });
 
       const result = await service.assertUserCanAccessTask(
         task._id.toString(),
@@ -131,7 +153,9 @@ describe('TasksService', () => {
 
   describe('assignTask() — concurrent update', () => {
     it('throws ConflictException when version does not match (race condition)', async () => {
-      mockTaskModel.findOneAndUpdate.mockReturnValue({ exec: jest.fn().mockResolvedValue(null) });
+      mockTaskModel.findOneAndUpdate.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(null),
+      });
 
       await expect(
         service.assignTask(
@@ -143,18 +167,21 @@ describe('TasksService', () => {
     });
 
     it('returns the saved task and fires notification on success', async () => {
-      const saved = makeTask({ assignedTo: new Types.ObjectId() });
-      mockTaskModel.findOneAndUpdate.mockReturnValue({ exec: jest.fn().mockResolvedValue(saved) });
+      const assigneeId = new Types.ObjectId();
+      const saved = makeTask({ assignedTo: assigneeId });
+      mockTaskModel.findOneAndUpdate.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(saved),
+      });
 
       const result = await service.assignTask(
         saved._id.toString(),
-        { assigneeId: saved.assignedTo!.toString(), expectedVersion: 0 },
+        { assigneeId: assigneeId.toString(), expectedVersion: 0 },
         saved.userId.toString(),
       );
 
       expect(result).toBe(saved);
       expect(mockGateway.notifyTaskAssigned).toHaveBeenCalledWith(
-        saved.assignedTo!.toString(),
+        assigneeId.toString(),
         saved,
       );
     });

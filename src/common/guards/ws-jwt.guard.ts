@@ -14,20 +14,24 @@ export class WsJwtGuard {
   ) {}
 
   validateClient(client: Socket): void {
+    const auth = client.handshake.auth as Record<string, unknown>;
     const token =
-      client.handshake.auth?.token ||
-      (client.handshake.headers.authorization as string)?.replace('Bearer ', '');
+      (auth['token'] as string | undefined) ||
+      client.handshake.headers.authorization?.replace('Bearer ', '');
 
     if (!token) {
       throw new WsException('Missing token');
     }
 
     try {
-      const payload = this.jwtService.verify<{ sub: string; email: string }>(token, {
-        secret: this.configService.get<string>('JWT_SECRET'),
-      });
-      client.data.userId = payload.sub;
-      client.data.email = payload.email;
+      const payload = this.jwtService.verify<{ sub: string; email: string }>(
+        token,
+        {
+          secret: this.configService.get<string>('JWT_SECRET'),
+        },
+      );
+      (client.data as Record<string, unknown>)['userId'] = payload.sub;
+      (client.data as Record<string, unknown>)['email'] = payload.email;
     } catch (err) {
       this.logger.warn(`WS auth failed: ${(err as Error).message}`);
       throw new WsException('Invalid token');

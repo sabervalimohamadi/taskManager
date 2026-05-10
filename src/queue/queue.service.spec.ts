@@ -1,13 +1,14 @@
 import { getQueueToken } from '@nestjs/bullmq';
 import { Test, TestingModule } from '@nestjs/testing';
+import { TaskDocument } from '../tasks/schemas/task.schema';
 import { QueueService } from './queue.service';
 
-function makeTask(dueDateOffsetMs: number) {
+function makeTask(dueDateOffsetMs: number): TaskDocument {
   const id = '507f1f77bcf86cd799439011';
   return {
     _id: { toString: () => id },
     dueDate: new Date(Date.now() + dueDateOffsetMs),
-  } as any;
+  } as unknown as TaskDocument;
 }
 
 describe('QueueService', () => {
@@ -34,7 +35,7 @@ describe('QueueService', () => {
   describe('scheduleDeadlineJob() — deduplication', () => {
     it('passes a deterministic jobId so BullMQ deduplicates concurrent schedules', async () => {
       const task = makeTask(2 * 60 * 60 * 1000); // 2 hours ahead
-      const taskId = task._id.toString();
+      const taskId = (task._id as { toString: () => string }).toString();
 
       await service.scheduleDeadlineJob(task);
 
@@ -72,7 +73,9 @@ describe('QueueService', () => {
 
     it('does nothing when no job is found', async () => {
       mockQueue.getJob.mockResolvedValue(null);
-      await expect(service.cancelDeadlineJob('no-such-id')).resolves.toBeUndefined();
+      await expect(
+        service.cancelDeadlineJob('no-such-id'),
+      ).resolves.toBeUndefined();
     });
   });
 });

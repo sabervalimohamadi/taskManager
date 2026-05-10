@@ -16,7 +16,7 @@ export class QueueService {
 
     if (delay <= 0) {
       this.logger.warn(
-        `Skipping deadline job for task ${task._id}: due date is past or within 30 min`,
+        `Skipping deadline job for task ${String(task._id)}: due date is past or within 30 min`,
       );
       return;
     }
@@ -25,7 +25,7 @@ export class QueueService {
       'deadline-reminder',
       { taskId: task._id.toString() },
       {
-        jobId: `deadline-${task._id}`,
+        jobId: `deadline-${String(task._id)}`,
         delay,
         attempts: 3,
         backoff: { type: 'exponential', delay: 5000 },

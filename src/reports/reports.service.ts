@@ -18,10 +18,11 @@ export class ReportsService {
     userId: string,
   ): Promise<{ completedCount: number }[]> {
     const cacheKey = `report:completed-per-user:${userId}`;
-    const cached = await this.cacheManager.get<{ completedCount: number }[]>(cacheKey);
+    const cached =
+      await this.cacheManager.get<{ completedCount: number }[]>(cacheKey);
     if (cached) return cached;
 
-    const result = await this.taskModel.aggregate([
+    const result = await this.taskModel.aggregate<{ completedCount: number }>([
       {
         $match: {
           status: TaskStatus.DONE,

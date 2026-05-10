@@ -23,7 +23,9 @@ const WS_MAX_CONN_PER_MIN = 20;
 const WS_CONN_WINDOW_MS = 60_000;
 
 @WebSocketGateway({ cors: { origin: '*' } })
-export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class NotificationsGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -45,8 +47,10 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
 
     try {
       this.wsJwtGuard.validateClient(client);
-      const userId = client.data.userId as string;
-      client.join(userId);
+      const userId = (client.data as Record<string, unknown>)[
+        'userId'
+      ] as string;
+      void client.join(userId);
       this.logger.log(`User ${userId} connected (socket ${client.id})`);
     } catch {
       client.emit('error', { message: 'Unauthorized' });
@@ -63,7 +67,9 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   }
 
   handleDisconnect(client: Socket): void {
-    const userId = client.data.userId as string | undefined;
+    const userId = (client.data as Record<string, unknown>)['userId'] as
+      | string
+      | undefined;
     if (userId) {
       this.logger.log(`User ${userId} disconnected (socket ${client.id})`);
     }
