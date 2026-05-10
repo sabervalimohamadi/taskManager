@@ -4,6 +4,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import * as Joi from 'joi';
+import KeyvRedis from '@keyv/redis';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
@@ -40,7 +41,19 @@ import { AttachmentsModule } from './attachments/attachments.module';
       }),
       inject: [ConfigService],
     }),
-    CacheModule.register({ isGlobal: true, ttl: 60000 }),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => {
+        const host = configService.get<string>('REDIS_HOST', 'localhost');
+        const port = configService.get<number>('REDIS_PORT', 6379);
+        return {
+          stores: [new KeyvRedis(`redis://${host}:${port}`)],
+          ttl: 60_000,
+        };
+      },
+      inject: [ConfigService],
+    }),
     ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
     AuthModule,

@@ -1,10 +1,13 @@
 import {
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { InjectModel } from '@nestjs/mongoose';
+import type { Cache } from 'cache-manager';
 import { Model, Types } from 'mongoose';
 import {
   ActivityAction,
@@ -27,7 +30,15 @@ export class TasksService {
     private readonly queueService: QueueService,
     private readonly outboxService: OutboxService,
     private readonly notificationsGateway: NotificationsGateway,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
+
+  private async invalidateReportCache(userId: string): Promise<void> {
+    await Promise.all([
+      this.cacheManager.del(`report:completed-per-user:${userId}`),
+      this.cacheManager.del(`report:overdue:${userId}`),
+    ]);
+  }
 
   async create(userId: string, dto: CreateTaskDto): Promise<TaskDocument> {
     const task = new this.taskModel({
@@ -44,6 +55,8 @@ export class TasksService {
       await this.queueService.scheduleDeadlineJob(saved);
     }
 
+    await this.invalidateReportCache(userId);
+
     return saved;
   }
 
@@ -55,7 +68,7 @@ export class TasksService {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
 
-    const filter: Record<string, any> = {
+    const filter: Record<string, unknown> = {
       $or: [
         { userId: new Types.ObjectId(userId) },
         { assignedTo: new Types.ObjectId(userId) },
@@ -66,9 +79,10 @@ export class TasksService {
     if (priority) filter.priority = priority;
     if (assignedTo) filter.assignedTo = new Types.ObjectId(assignedTo);
     if (dueDateFrom || dueDateTo) {
-      filter.dueDate = {};
-      if (dueDateFrom) filter.dueDate.$gte = new Date(dueDateFrom);
-      if (dueDateTo) filter.dueDate.$lte = new Date(dueDateTo);
+      const dateFilter: Record<string, Date> = {};
+      if (dueDateFrom) dateFilter.$gte = new Date(dueDateFrom);
+      if (dueDateTo) dateFilter.$lte = new Date(dueDateTo);
+      filter.dueDate = dateFilter;
     }
 
     const skip = (page - 1) * limit;
@@ -119,7 +133,7 @@ export class TasksService {
   async update(id: string, userId: string, dto: UpdateTaskDto): Promise<TaskDocument> {
     const { version, ...updates } = dto;
 
-    const $set: Record<string, any> = {};
+    const $set: Record<string, unknown> = {};
     if (updates.title !== undefined) $set.title = updates.title;
     if (updates.description !== undefined) $set.description = updates.description;
     if (updates.status !== undefined) $set.status = updates.status;
@@ -172,7 +186,7 @@ export class TasksService {
       await this.activityLogService.log(id, userId, ActivityAction.ASSIGNED, {
         assignedTo: updates.assignedTo,
       });
-      this.notificationsGateway.notifyTaskAssigned(updates.assignedTo!, saved);
+      void this.notificationsGateway.notifyTaskAssigned(updates.assignedTo!, saved);
     }
 
     const statusChanged = updates.status !== undefined && updates.status !== oldTask.status;
@@ -183,7 +197,7 @@ export class TasksService {
       });
     }
 
-    this.notificationsGateway.notifyTaskUpdated(oldTask.userId.toString(), saved);
+    void this.notificationsGateway.notifyTaskUpdated(oldTask.userId.toString(), saved);
 
     const dueDateChanged =
       updates.dueDate !== undefined &&
@@ -191,6 +205,8 @@ export class TasksService {
     if (dueDateChanged) {
       await this.outboxService.enqueue('reschedule-deadline', { taskId: id });
     }
+
+    await this.invalidateReportCache(userId);
 
     return saved;
   }
@@ -202,6 +218,7 @@ export class TasksService {
       throw new ForbiddenException('Only the task owner can delete this task');
     }
     await task.deleteOne();
+    await this.invalidateReportCache(userId);
   }
 
   async assignTask(
@@ -236,7 +253,12 @@ export class TasksService {
     await this.activityLogService.log(taskId, requestingUserId, ActivityAction.ASSIGNED, {
       assignedTo: dto.assigneeId,
     });
-    this.notificationsGateway.notifyTaskAssigned(dto.assigneeId, saved);
+    void this.notificationsGateway.notifyTaskAssigned(dto.assigneeId, saved);
+
+    await Promise.all([
+      this.invalidateReportCache(requestingUserId),
+      this.invalidateReportCache(dto.assigneeId),
+    ]);
 
     return saved;
   }
