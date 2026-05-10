@@ -1,13 +1,24 @@
-import { Logger } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
+import type { Cache } from 'cache-manager';
 import { Server, Socket } from 'socket.io';
 import { WsJwtGuard } from '../common/guards/ws-jwt.guard';
+import { NotificationPreferences } from '../users/schemas/user.schema';
 import { UsersService } from '../users/users.service';
+
+const DEFAULT_PREFS: NotificationPreferences = {
+  deadlineReminders: true,
+  taskAssigned: true,
+  taskUpdated: true,
+};
+
+const PREFS_TTL_MS = 300_000;
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -19,6 +30,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   constructor(
     private readonly wsJwtGuard: WsJwtGuard,
     private readonly usersService: UsersService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
   handleConnection(client: Socket): void {
@@ -41,23 +53,34 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   }
 
   async notifyTaskAssigned(userId: string, task: any): Promise<void> {
-    const user = await this.usersService.findById(userId);
-    if (user?.notificationPreferences?.taskAssigned !== false) {
+    const prefs = await this.getPrefs(userId);
+    if (prefs.taskAssigned !== false) {
       this.server.to(userId).emit('task-assigned', task);
     }
   }
 
   async notifyTaskUpdated(userId: string, task: any): Promise<void> {
-    const user = await this.usersService.findById(userId);
-    if (user?.notificationPreferences?.taskUpdated !== false) {
+    const prefs = await this.getPrefs(userId);
+    if (prefs.taskUpdated !== false) {
       this.server.to(userId).emit('task-updated', task);
     }
   }
 
   async notifyDeadlineReminder(userId: string, task: any): Promise<void> {
-    const user = await this.usersService.findById(userId);
-    if (user?.notificationPreferences?.deadlineReminders !== false) {
+    const prefs = await this.getPrefs(userId);
+    if (prefs.deadlineReminders !== false) {
       this.server.to(userId).emit('deadline-reminder', task);
     }
+  }
+
+  private async getPrefs(userId: string): Promise<NotificationPreferences> {
+    const key = `prefs:${userId}`;
+    const cached = await this.cacheManager.get<NotificationPreferences>(key);
+    if (cached) return cached;
+
+    const user = await this.usersService.findById(userId);
+    const prefs = user?.notificationPreferences ?? DEFAULT_PREFS;
+    await this.cacheManager.set(key, prefs, PREFS_TTL_MS);
+    return prefs;
   }
 }

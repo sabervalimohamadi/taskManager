@@ -1,5 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { InjectModel } from '@nestjs/mongoose';
+import type { Cache } from 'cache-manager';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from './schemas/user.schema';
@@ -8,7 +10,10 @@ import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+  ) {}
 
   findByEmail(email: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ email }).exec();
@@ -38,8 +43,13 @@ export class UsersService {
     if (dto.taskUpdated !== undefined) {
       update['notificationPreferences.taskUpdated'] = dto.taskUpdated;
     }
-    return this.userModel
+
+    const updated = await this.userModel
       .findByIdAndUpdate(userId, { $set: update }, { new: true })
       .exec();
+
+    await this.cacheManager.del(`prefs:${userId}`);
+
+    return updated;
   }
 }
