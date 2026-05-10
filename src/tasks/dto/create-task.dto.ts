@@ -7,19 +7,23 @@ import {
   IsEnum,
   IsDateString,
   IsMongoId,
+  MaxLength,
 } from 'class-validator';
+import { IsFutureDate } from '../../common/validators/is-future-date.validator';
 import { TaskPriority, TaskStatus } from '../schemas/task.schema';
 
 export class CreateTaskDto {
-  @ApiProperty()
-  @Transform(({ value }) => value?.trim())
+  @ApiProperty({ maxLength: 200 })
+  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
   @IsNotEmpty()
+  @MaxLength(200)
   title: string;
 
-  @ApiPropertyOptional()
-  @Transform(({ value }) => value?.trim())
+  @ApiPropertyOptional({ maxLength: 2000 })
+  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
+  @MaxLength(2000)
   @IsOptional()
   description?: string;
 
@@ -33,8 +37,9 @@ export class CreateTaskDto {
   @IsOptional()
   priority?: TaskPriority;
 
-  @ApiPropertyOptional({ description: 'ISO 8601 date string' })
+  @ApiPropertyOptional({ description: 'ISO 8601 future date string' })
   @IsDateString()
+  @IsFutureDate()
   @IsOptional()
   dueDate?: string;
 
