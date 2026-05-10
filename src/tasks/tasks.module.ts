@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ActivityLogModule } from '../activity-log/activity-log.module';
 import { GatewayModule } from '../gateway/gateway.module';
@@ -10,7 +10,7 @@ import { TasksService } from './tasks.service';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Task.name, schema: TaskSchema }]),
-    ActivityLogModule,
+    forwardRef(() => ActivityLogModule),
     QueueModule,
     GatewayModule,
   ],

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TasksModule } from '../tasks/tasks.module';
 import { ActivityLogController } from './activity-log.controller';
@@ -10,7 +10,7 @@ import { ActivityLog, ActivityLogSchema } from './schemas/activity-log.schema';
     MongooseModule.forFeature([
       { name: ActivityLog.name, schema: ActivityLogSchema },
     ]),
-    TasksModule,
+    forwardRef(() => TasksModule),
   ],
   controllers: [ActivityLogController],
   providers: [ActivityLogService],

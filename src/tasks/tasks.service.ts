@@ -4,14 +4,13 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { InjectModel } from '@nestjs/mongoose';
 import type { Cache } from 'cache-manager';
 import { Model, Types } from 'mongoose';
-import {
-  ActivityAction,
-} from '../activity-log/schemas/activity-log.schema';
+import { ActivityAction } from '../activity-log/schemas/activity-log.schema';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { NotificationsGateway } from '../gateway/notifications.gateway';
 import { OutboxService } from '../queue/outbox.service';
@@ -26,6 +25,7 @@ import { Task, TaskDocument } from './schemas/task.schema';
 export class TasksService {
   constructor(
     @InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>,
+    @Inject(forwardRef(() => ActivityLogService))
     private readonly activityLogService: ActivityLogService,
     private readonly queueService: QueueService,
     private readonly outboxService: OutboxService,
@@ -44,12 +44,18 @@ export class TasksService {
     const task = new this.taskModel({
       ...dto,
       userId: new Types.ObjectId(userId),
-      assignedTo: dto.assignedTo ? new Types.ObjectId(dto.assignedTo) : undefined,
+      assignedTo: dto.assignedTo
+        ? new Types.ObjectId(dto.assignedTo)
+        : undefined,
       dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
     });
     const saved = await task.save();
 
-    await this.activityLogService.log(saved._id.toString(), userId, ActivityAction.CREATED);
+    await this.activityLogService.log(
+      saved._id.toString(),
+      userId,
+      ActivityAction.CREATED,
+    );
 
     if (dto.dueDate) {
       await this.queueService.scheduleDeadlineJob(saved);
@@ -63,7 +69,12 @@ export class TasksService {
   async findAll(
     userId: string,
     query: QueryTaskDto,
-  ): Promise<{ data: TaskDocument[]; total: number; page: number; limit: number }> {
+  ): Promise<{
+    data: TaskDocument[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     const { status, priority, assignedTo, dueDateFrom, dueDateTo } = query;
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
@@ -89,7 +100,9 @@ export class TasksService {
     const [data, total] = await Promise.all([
       this.taskModel
         .find(filter)
-        .select('title description status priority dueDate userId assignedTo version createdAt')
+        .select(
+          'title description status priority dueDate userId assignedTo version createdAt',
+        )
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -101,7 +114,10 @@ export class TasksService {
     return { data, total, page, limit };
   }
 
-  async assertUserCanAccessTask(taskId: string, userId: string): Promise<TaskDocument> {
+  async assertUserCanAccessTask(
+    taskId: string,
+    userId: string,
+  ): Promise<TaskDocument> {
     const task = await this.taskModel
       .findOne({
         _id: new Types.ObjectId(taskId),
@@ -111,7 +127,8 @@ export class TasksService {
         ],
       })
       .exec();
-    if (!task) throw new NotFoundException(`Task ${taskId} not found or access denied`);
+    if (!task)
+      throw new NotFoundException(`Task ${taskId} not found or access denied`);
     return task;
   }
 
@@ -130,16 +147,22 @@ export class TasksService {
     return task;
   }
 
-  async update(id: string, userId: string, dto: UpdateTaskDto): Promise<TaskDocument> {
+  async update(
+    id: string,
+    userId: string,
+    dto: UpdateTaskDto,
+  ): Promise<TaskDocument> {
     const { version, ...updates } = dto;
 
     const $set: Record<string, unknown> = {};
     if (updates.title !== undefined) $set.title = updates.title;
-    if (updates.description !== undefined) $set.description = updates.description;
+    if (updates.description !== undefined)
+      $set.description = updates.description;
     if (updates.status !== undefined) $set.status = updates.status;
     if (updates.priority !== undefined) $set.priority = updates.priority;
     if (updates.dueDate !== undefined) $set.dueDate = new Date(updates.dueDate);
-    if (updates.assignedTo !== undefined) $set.assignedTo = new Types.ObjectId(updates.assignedTo);
+    if (updates.assignedTo !== undefined)
+      $set.assignedTo = new Types.ObjectId(updates.assignedTo);
 
     const filter = {
       _id: new Types.ObjectId(id),
@@ -181,23 +204,36 @@ export class TasksService {
     });
 
     const assignedToChanged =
-      updates.assignedTo !== undefined && updates.assignedTo !== oldTask.assignedTo?.toString();
+      updates.assignedTo !== undefined &&
+      updates.assignedTo !== oldTask.assignedTo?.toString();
     if (assignedToChanged) {
       await this.activityLogService.log(id, userId, ActivityAction.ASSIGNED, {
         assignedTo: updates.assignedTo,
       });
-      void this.notificationsGateway.notifyTaskAssigned(updates.assignedTo!, saved);
+      void this.notificationsGateway.notifyTaskAssigned(
+        updates.assignedTo!,
+        saved,
+      );
     }
 
-    const statusChanged = updates.status !== undefined && updates.status !== oldTask.status;
+    const statusChanged =
+      updates.status !== undefined && updates.status !== oldTask.status;
     if (statusChanged) {
-      await this.activityLogService.log(id, userId, ActivityAction.STATUS_CHANGED, {
-        from: oldTask.status,
-        to: saved.status,
-      });
+      await this.activityLogService.log(
+        id,
+        userId,
+        ActivityAction.STATUS_CHANGED,
+        {
+          from: oldTask.status,
+          to: saved.status,
+        },
+      );
     }
 
-    void this.notificationsGateway.notifyTaskUpdated(oldTask.userId.toString(), saved);
+    void this.notificationsGateway.notifyTaskUpdated(
+      oldTask.userId.toString(),
+      saved,
+    );
 
     const dueDateChanged =
       updates.dueDate !== undefined &&
@@ -250,9 +286,14 @@ export class TasksService {
       );
     }
 
-    await this.activityLogService.log(taskId, requestingUserId, ActivityAction.ASSIGNED, {
-      assignedTo: dto.assigneeId,
-    });
+    await this.activityLogService.log(
+      taskId,
+      requestingUserId,
+      ActivityAction.ASSIGNED,
+      {
+        assignedTo: dto.assigneeId,
+      },
+    );
     void this.notificationsGateway.notifyTaskAssigned(dto.assigneeId, saved);
 
     await Promise.all([

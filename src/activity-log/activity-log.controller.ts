@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Inject, Param, UseGuards, forwardRef } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -19,13 +19,17 @@ import { ActivityLogService } from './activity-log.service';
 export class ActivityLogController {
   constructor(
     private readonly activityLogService: ActivityLogService,
+    @Inject(forwardRef(() => TasksService))
     private readonly tasksService: TasksService,
   ) {}
 
   @Get('tasks/:taskId/activity')
   @ApiOperation({ summary: 'Get activity log for a task' })
   @ApiParam({ name: 'taskId', description: 'Task ObjectId' })
-  @ApiResponse({ status: 200, description: 'Activity log entries for the task' })
+  @ApiResponse({
+    status: 200,
+    description: 'Activity log entries for the task',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Task not found or access denied' })
   async getLogsForTask(
