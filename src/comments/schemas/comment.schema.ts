@@ -3,9 +3,9 @@ import { HydratedDocument, Types } from 'mongoose';
 
 export type CommentDocument = HydratedDocument<Comment>;
 
-@Schema()
+@Schema({ timestamps: true })
 export class Comment {
-  @Prop({ required: true })
+  @Prop({ required: true, maxlength: 5000 })
   content: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Task', required: true, index: true })
@@ -14,8 +14,8 @@ export class Comment {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
 
-  @Prop({ default: Date.now })
-  createdAt: Date;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
 }
 
 export const CommentSchema = SchemaFactory.createForClass(Comment);

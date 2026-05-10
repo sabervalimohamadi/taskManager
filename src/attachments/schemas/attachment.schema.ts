@@ -3,12 +3,12 @@ import { HydratedDocument, Types } from 'mongoose';
 
 export type AttachmentDocument = HydratedDocument<Attachment>;
 
-@Schema()
+@Schema({ timestamps: true })
 export class Attachment {
-  @Prop({ required: true })
+  @Prop({ required: true, maxlength: 255 })
   filename: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, maxlength: 100 })
   mimetype: string;
 
   @Prop({ required: true })
@@ -20,8 +20,8 @@ export class Attachment {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   uploadedBy: Types.ObjectId;
 
-  @Prop({ default: Date.now })
-  createdAt: Date;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
 }
 
 export const AttachmentSchema = SchemaFactory.createForClass(Attachment);

@@ -11,9 +11,9 @@ export enum ActivityAction {
 
 export type ActivityLogDocument = HydratedDocument<ActivityLog>;
 
-@Schema()
+@Schema({ timestamps: true })
 export class ActivityLog {
-  @Prop({ type: Types.ObjectId, ref: 'Task', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'Task', required: true })
   taskId: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
@@ -23,10 +23,15 @@ export class ActivityLog {
   action: ActivityAction;
 
   @Prop({ type: mongoose.Schema.Types.Mixed })
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 
-  @Prop({ default: Date.now, index: true })
+  @Prop({ default: Date.now })
   timestamp: Date;
+
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
 }
 
 export const ActivityLogSchema = SchemaFactory.createForClass(ActivityLog);
+
+ActivityLogSchema.index({ taskId: 1, timestamp: -1 });

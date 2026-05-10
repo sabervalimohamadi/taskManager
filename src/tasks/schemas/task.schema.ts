@@ -15,12 +15,12 @@ export enum TaskPriority {
 
 export type TaskDocument = HydratedDocument<Task>;
 
-@Schema()
+@Schema({ timestamps: true })
 export class Task {
-  @Prop({ required: true })
+  @Prop({ required: true, maxlength: 200 })
   title: string;
 
-  @Prop()
+  @Prop({ maxlength: 2000 })
   description?: string;
 
   @Prop({ type: String, enum: TaskStatus, default: TaskStatus.TODO })
@@ -41,8 +41,8 @@ export class Task {
   @Prop({ default: 0 })
   version: number;
 
-  @Prop({ default: Date.now })
-  createdAt: Date;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);
