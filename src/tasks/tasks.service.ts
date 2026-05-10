@@ -11,6 +11,7 @@ import {
 } from '../activity-log/schemas/activity-log.schema';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { NotificationsGateway } from '../gateway/notifications.gateway';
+import { OutboxService } from '../queue/outbox.service';
 import { QueueService } from '../queue/queue.service';
 import { AssignTaskDto } from './dto/assign-task.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -24,6 +25,7 @@ export class TasksService {
     @InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>,
     private readonly activityLogService: ActivityLogService,
     private readonly queueService: QueueService,
+    private readonly outboxService: OutboxService,
     private readonly notificationsGateway: NotificationsGateway,
   ) {}
 
@@ -180,8 +182,7 @@ export class TasksService {
       updates.dueDate !== undefined &&
       new Date(updates.dueDate).getTime() !== oldTask.dueDate?.getTime();
     if (dueDateChanged) {
-      await this.queueService.cancelDeadlineJob(id);
-      await this.queueService.scheduleDeadlineJob(saved);
+      await this.outboxService.enqueue('reschedule-deadline', { taskId: id });
     }
 
     return saved;

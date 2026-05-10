@@ -4,6 +4,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { GatewayModule } from '../gateway/gateway.module';
 import { Task, TaskSchema } from '../tasks/schemas/task.schema';
+import { OutboxEvent, OutboxEventSchema } from './schemas/outbox-event.schema';
+import { OutboxService } from './outbox.service';
+import { OutboxWorker } from './outbox.worker';
 import { QueueProcessor } from './queue.processor';
 import { QueueService } from './queue.service';
 
@@ -20,10 +23,13 @@ import { QueueService } from './queue.service';
       inject: [ConfigService],
     }),
     BullModule.registerQueue({ name: 'task-deadlines' }),
-    MongooseModule.forFeature([{ name: Task.name, schema: TaskSchema }]),
+    MongooseModule.forFeature([
+      { name: Task.name, schema: TaskSchema },
+      { name: OutboxEvent.name, schema: OutboxEventSchema },
+    ]),
     GatewayModule,
   ],
-  providers: [QueueService, QueueProcessor],
-  exports: [QueueService],
+  providers: [QueueService, QueueProcessor, OutboxService, OutboxWorker],
+  exports: [QueueService, OutboxService],
 })
 export class QueueModule {}
