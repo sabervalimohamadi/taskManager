@@ -45,8 +45,12 @@ export class CommentsController {
   @ApiParam({ name: 'taskId', description: 'Task ObjectId' })
   @ApiResponse({ status: 200, description: 'List of comments' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  getComments(@Param('taskId') taskId: string) {
-    return this.commentsService.getComments(taskId);
+  @ApiResponse({ status: 404, description: 'Task not found or access denied' })
+  getComments(
+    @Param('taskId') taskId: string,
+    @CurrentUser() user: { userId: string },
+  ) {
+    return this.commentsService.getComments(taskId, user.userId);
   }
 
   @Delete('tasks/:taskId/comments/:commentId')

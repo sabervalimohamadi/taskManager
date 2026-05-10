@@ -1,11 +1,10 @@
 import {
   ForbiddenException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Task, TaskDocument } from '../tasks/schemas/task.schema';
+import { TasksService } from '../tasks/tasks.service';
 import { CreateAttachmentDto } from './dto/create-attachment.dto';
 import { Attachment, AttachmentDocument } from './schemas/attachment.schema';
 
@@ -13,7 +12,7 @@ import { Attachment, AttachmentDocument } from './schemas/attachment.schema';
 export class AttachmentsService {
   constructor(
     @InjectModel(Attachment.name) private readonly attachmentModel: Model<AttachmentDocument>,
-    @InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>,
+    private readonly tasksService: TasksService,
   ) {}
 
   async addAttachment(
@@ -21,8 +20,7 @@ export class AttachmentsService {
     userId: string,
     dto: CreateAttachmentDto,
   ): Promise<AttachmentDocument> {
-    const task = await this.taskModel.findById(taskId).exec();
-    if (!task) throw new NotFoundException(`Task ${taskId} not found`);
+    await this.tasksService.assertUserCanAccessTask(taskId, userId);
 
     const attachment = new this.attachmentModel({
       ...dto,
@@ -32,7 +30,9 @@ export class AttachmentsService {
     return attachment.save();
   }
 
-  async getAttachments(taskId: string): Promise<AttachmentDocument[]> {
+  async getAttachments(taskId: string, userId: string): Promise<AttachmentDocument[]> {
+    await this.tasksService.assertUserCanAccessTask(taskId, userId);
+
     return this.attachmentModel
       .find({ taskId: new Types.ObjectId(taskId) })
       .exec();
@@ -41,7 +41,7 @@ export class AttachmentsService {
   async deleteAttachment(attachmentId: string, userId: string): Promise<void> {
     const attachment = await this.attachmentModel.findById(attachmentId).exec();
     if (!attachment) {
-      throw new NotFoundException(`Attachment ${attachmentId} not found`);
+      throw new ForbiddenException('Attachment not found or access denied');
     }
 
     if (attachment.uploadedBy.toString() !== userId) {

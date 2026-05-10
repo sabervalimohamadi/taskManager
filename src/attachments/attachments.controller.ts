@@ -45,8 +45,12 @@ export class AttachmentsController {
   @ApiParam({ name: 'taskId', description: 'Task ObjectId' })
   @ApiResponse({ status: 200, description: 'List of attachment records' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  getAttachments(@Param('taskId') taskId: string) {
-    return this.attachmentsService.getAttachments(taskId);
+  @ApiResponse({ status: 404, description: 'Task not found or access denied' })
+  getAttachments(
+    @Param('taskId') taskId: string,
+    @CurrentUser() user: { userId: string },
+  ) {
+    return this.attachmentsService.getAttachments(taskId, user.userId);
   }
 
   @Delete('tasks/:taskId/attachments/:attachmentId')

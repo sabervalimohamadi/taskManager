@@ -78,6 +78,20 @@ export class TasksService {
     return { data, total, page, limit };
   }
 
+  async assertUserCanAccessTask(taskId: string, userId: string): Promise<TaskDocument> {
+    const task = await this.taskModel
+      .findOne({
+        _id: new Types.ObjectId(taskId),
+        $or: [
+          { userId: new Types.ObjectId(userId) },
+          { assignedTo: new Types.ObjectId(userId) },
+        ],
+      })
+      .exec();
+    if (!task) throw new NotFoundException(`Task ${taskId} not found or access denied`);
+    return task;
+  }
+
   async findOne(id: string, userId: string): Promise<TaskDocument> {
     const task = await this.taskModel
       .findOne({
