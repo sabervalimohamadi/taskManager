@@ -26,8 +26,8 @@ export class QueueProcessor {
 
     const task = await this.taskModel
       .findById(taskId)
-      .populate('userId')
-      .populate('assignedTo')
+      .select('title dueDate userId assignedTo')
+      .lean<TaskDocument>()
       .exec();
 
     if (!task) {
@@ -35,14 +35,13 @@ export class QueueProcessor {
       return;
     }
 
-    // After populate, userId is a hydrated User document at runtime
-    const ownerId = (task.userId as any)._id.toString();
+    const ownerId = task.userId.toString();
     const payload = { taskId, title: task.title, dueDate: task.dueDate };
 
     await this.notificationsGateway.notifyDeadlineReminder(ownerId, payload);
 
     if (task.assignedTo) {
-      const assigneeId = (task.assignedTo as any)._id.toString();
+      const assigneeId = task.assignedTo.toString();
       if (assigneeId !== ownerId) {
         await this.notificationsGateway.notifyDeadlineReminder(assigneeId, payload);
       }
