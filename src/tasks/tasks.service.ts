@@ -104,28 +104,31 @@ export class TasksService {
     if (updates.dueDate !== undefined) $set.dueDate = new Date(updates.dueDate);
     if (updates.assignedTo !== undefined) $set.assignedTo = new Types.ObjectId(updates.assignedTo);
 
-    const oldTask = await this.taskModel
-      .findOneAndUpdate(
-        {
-          _id: new Types.ObjectId(id),
-          version,
-          $or: [
-            { userId: new Types.ObjectId(userId) },
-            { assignedTo: new Types.ObjectId(userId) },
-          ],
-        },
-        { $set, $inc: { version: 1 } },
-        { new: false },
-      )
-      .exec();
+    const filter = {
+      _id: new Types.ObjectId(id),
+      version,
+      $or: [
+        { userId: new Types.ObjectId(userId) },
+        { assignedTo: new Types.ObjectId(userId) },
+      ],
+    };
 
+    const oldTask = await this.taskModel.findOne(filter).exec();
     if (!oldTask) {
       throw new ConflictException(
         'Task was modified by another request. Please reload and retry.',
       );
     }
 
-    const saved = await this.taskModel.findById(new Types.ObjectId(id)).exec();
+    const saved = await this.taskModel
+      .findOneAndUpdate(filter, { $set, $inc: { version: 1 } }, { new: true })
+      .exec();
+
+    if (!saved) {
+      throw new ConflictException(
+        'Task was modified by another request. Please reload and retry.',
+      );
+    }
 
     await this.activityLogService.log(id, userId, ActivityAction.UPDATED, {
       before: {
@@ -134,9 +137,9 @@ export class TasksService {
         dueDate: oldTask.dueDate,
       },
       after: {
-        status: saved!.status,
-        assignedTo: saved!.assignedTo?.toString(),
-        dueDate: saved!.dueDate,
+        status: saved.status,
+        assignedTo: saved.assignedTo?.toString(),
+        dueDate: saved.dueDate,
       },
     });
 
@@ -146,28 +149,28 @@ export class TasksService {
       await this.activityLogService.log(id, userId, ActivityAction.ASSIGNED, {
         assignedTo: updates.assignedTo,
       });
-      this.notificationsGateway.notifyTaskAssigned(updates.assignedTo!, saved!);
+      this.notificationsGateway.notifyTaskAssigned(updates.assignedTo!, saved);
     }
 
     const statusChanged = updates.status !== undefined && updates.status !== oldTask.status;
     if (statusChanged) {
       await this.activityLogService.log(id, userId, ActivityAction.STATUS_CHANGED, {
         from: oldTask.status,
-        to: saved!.status,
+        to: saved.status,
       });
     }
 
-    this.notificationsGateway.notifyTaskUpdated(oldTask.userId.toString(), saved!);
+    this.notificationsGateway.notifyTaskUpdated(oldTask.userId.toString(), saved);
 
     const dueDateChanged =
       updates.dueDate !== undefined &&
       new Date(updates.dueDate).getTime() !== oldTask.dueDate?.getTime();
     if (dueDateChanged) {
       await this.queueService.cancelDeadlineJob(id);
-      await this.queueService.scheduleDeadlineJob(saved!);
+      await this.queueService.scheduleDeadlineJob(saved);
     }
 
-    return saved!;
+    return saved;
   }
 
   async remove(id: string, userId: string): Promise<void> {
