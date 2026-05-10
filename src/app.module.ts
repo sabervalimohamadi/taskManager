@@ -31,6 +31,8 @@ import { AttachmentsModule } from './attachments/attachments.module';
         REDIS_HOST: Joi.string().default('localhost'),
         REDIS_PORT: Joi.number().integer().default(6379),
         PORT: Joi.number().integer().default(3000),
+        NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
+        CORS_ORIGINS: Joi.string().default(''),
       }),
       validationOptions: { abortEarly: false },
     }),
