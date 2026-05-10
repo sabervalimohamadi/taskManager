@@ -19,6 +19,8 @@ const DEFAULT_PREFS: NotificationPreferences = {
 };
 
 const PREFS_TTL_MS = 300_000;
+const WS_MAX_CONN_PER_MIN = 20;
+const WS_CONN_WINDOW_MS = 60_000;
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -33,7 +35,14 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
-  handleConnection(client: Socket): void {
+  async handleConnection(client: Socket): Promise<void> {
+    const ip = client.handshake.address;
+    if (await this.isConnectionRateLimited(ip)) {
+      client.emit('error', { message: 'Too many connections' });
+      client.disconnect(true);
+      return;
+    }
+
     try {
       this.wsJwtGuard.validateClient(client);
       const userId = client.data.userId as string;
@@ -43,6 +52,14 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
       client.emit('error', { message: 'Unauthorized' });
       client.disconnect(true);
     }
+  }
+
+  private async isConnectionRateLimited(ip: string): Promise<boolean> {
+    const key = `ws-conn-rate:${ip}`;
+    const count = (await this.cacheManager.get<number>(key)) ?? 0;
+    if (count >= WS_MAX_CONN_PER_MIN) return true;
+    await this.cacheManager.set(key, count + 1, WS_CONN_WINDOW_MS);
+    return false;
   }
 
   handleDisconnect(client: Socket): void {

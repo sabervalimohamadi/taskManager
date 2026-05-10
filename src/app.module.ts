@@ -55,7 +55,10 @@ import { AttachmentsModule } from './attachments/attachments.module';
       inject: [ConfigService],
     }),
     ScheduleModule.forRoot(),
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    ThrottlerModule.forRoot([
+      { name: 'burst', ttl: 5_000, limit: 15 },
+      { name: 'sustained', ttl: 60_000, limit: 100 },
+    ]),
     AuthModule,
     UsersModule,
     TasksModule,
