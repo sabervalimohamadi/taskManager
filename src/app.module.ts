@@ -18,6 +18,7 @@ import { GatewayModule } from './gateway/gateway.module';
 import { ReportsModule } from './reports/reports.module';
 import { CommentsModule } from './comments/comments.module';
 import { AttachmentsModule } from './attachments/attachments.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { AttachmentsModule } from './attachments/attachments.module';
     ReportsModule,
     CommentsModule,
     AttachmentsModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [
