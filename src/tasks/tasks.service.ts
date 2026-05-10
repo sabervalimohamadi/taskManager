@@ -187,21 +187,29 @@ export class TasksService {
     dto: AssignTaskDto,
     requestingUserId: string,
   ): Promise<TaskDocument> {
-    const task = await this.taskModel
-      .findOne({
-        _id: new Types.ObjectId(taskId),
-        $or: [
-          { userId: new Types.ObjectId(requestingUserId) },
-          { assignedTo: new Types.ObjectId(requestingUserId) },
-        ],
-      })
+    const saved = await this.taskModel
+      .findOneAndUpdate(
+        {
+          _id: new Types.ObjectId(taskId),
+          version: dto.expectedVersion,
+          $or: [
+            { userId: new Types.ObjectId(requestingUserId) },
+            { assignedTo: new Types.ObjectId(requestingUserId) },
+          ],
+        },
+        {
+          $set: { assignedTo: new Types.ObjectId(dto.assigneeId) },
+          $inc: { version: 1 },
+        },
+        { new: true },
+      )
       .exec();
 
-    if (!task) throw new NotFoundException(`Task ${taskId} not found`);
-
-    task.assignedTo = new Types.ObjectId(dto.assigneeId);
-    task.version += 1;
-    const saved = await task.save();
+    if (!saved) {
+      throw new ConflictException(
+        'Task not found, version mismatch, or insufficient permissions.',
+      );
+    }
 
     await this.activityLogService.log(taskId, requestingUserId, ActivityAction.ASSIGNED, {
       assignedTo: dto.assigneeId,
