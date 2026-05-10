@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import * as Joi from 'joi';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
@@ -22,6 +23,15 @@ import { AttachmentsModule } from './attachments/attachments.module';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      validationSchema: Joi.object({
+        MONGODB_URI: Joi.string().required(),
+        JWT_SECRET: Joi.string().min(32).required(),
+        JWT_EXPIRES_IN: Joi.string().default('15m'),
+        REDIS_HOST: Joi.string().default('localhost'),
+        REDIS_PORT: Joi.number().integer().default(6379),
+        PORT: Joi.number().integer().default(3000),
+      }),
+      validationOptions: { abortEarly: false },
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
