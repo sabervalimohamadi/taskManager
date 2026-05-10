@@ -1,66 +1,76 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import type { Cache } from 'cache-manager';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Task, TaskDocument, TaskStatus } from '../tasks/schemas/task.schema';
-import { User } from '../users/schemas/user.schema';
+
+const MAX_RANGE_MS = 365 * 24 * 3600 * 1000;
 
 @Injectable()
 export class ReportsService {
   constructor(
     @InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>,
-    @InjectModel(User.name) private readonly userModel: Model<any>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
-  async getCompletedTasksPerUser(): Promise<
-    { user: { id: string; name: string; email: string }; completedCount: number }[]
-  > {
-    const cacheKey = 'report:completed-per-user';
-    const cached = await this.cacheManager.get<
-      { user: { id: string; name: string; email: string }; completedCount: number }[]
-    >(cacheKey);
+  async getCompletedTasksPerUser(
+    userId: string,
+  ): Promise<{ completedCount: number }[]> {
+    const cacheKey = `report:completed-per-user:${userId}`;
+    const cached = await this.cacheManager.get<{ completedCount: number }[]>(cacheKey);
     if (cached) return cached;
 
     const result = await this.taskModel.aggregate([
-      { $match: { status: TaskStatus.DONE } },
-      { $group: { _id: '$userId', completedCount: { $sum: 1 } } },
       {
-        $lookup: {
-          from: 'users',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'userInfo',
+        $match: {
+          status: TaskStatus.DONE,
+          $or: [
+            { userId: new Types.ObjectId(userId) },
+            { assignedTo: new Types.ObjectId(userId) },
+          ],
         },
       },
-      { $unwind: '$userInfo' },
+      {
+        $group: {
+          _id: '$userId',
+          completedCount: { $sum: 1 },
+        },
+      },
       {
         $project: {
           _id: 0,
-          user: {
-            id: '$_id',
-            name: '$userInfo.name',
-            email: '$userInfo.email',
-          },
           completedCount: 1,
         },
       },
     ]);
 
-    await this.cacheManager.set(cacheKey, result, 60000);
+    await this.cacheManager.set(cacheKey, result, 60_000);
     return result;
   }
 
   async getTasksCompletedOverTime(
+    userId: string,
     from: Date,
     to: Date,
   ): Promise<{ date: string; count: number }[]> {
+    const diff = to.getTime() - from.getTime();
+    if (diff <= 0) {
+      throw new BadRequestException('"from" must be earlier than "to"');
+    }
+    if (diff > MAX_RANGE_MS) {
+      throw new BadRequestException('Date range cannot exceed 1 year');
+    }
+
     return this.taskModel.aggregate([
       {
         $match: {
           status: TaskStatus.DONE,
           createdAt: { $gte: from, $lte: to },
+          $or: [
+            { userId: new Types.ObjectId(userId) },
+            { assignedTo: new Types.ObjectId(userId) },
+          ],
         },
       },
       {
@@ -74,8 +84,8 @@ export class ReportsService {
     ]);
   }
 
-  async getOverdueTasks(): Promise<TaskDocument[]> {
-    const cacheKey = 'report:overdue';
+  async getOverdueTasks(userId: string): Promise<TaskDocument[]> {
+    const cacheKey = `report:overdue:${userId}`;
     const cached = await this.cacheManager.get<TaskDocument[]>(cacheKey);
     if (cached) return cached;
 
@@ -83,12 +93,16 @@ export class ReportsService {
       .find({
         dueDate: { $lt: new Date() },
         status: { $ne: TaskStatus.DONE },
+        $or: [
+          { userId: new Types.ObjectId(userId) },
+          { assignedTo: new Types.ObjectId(userId) },
+        ],
       })
       .populate('userId', 'name email')
       .populate('assignedTo', 'name email')
       .exec();
 
-    await this.cacheManager.set(cacheKey, result, 30000);
+    await this.cacheManager.set(cacheKey, result, 30_000);
     return result;
   }
 }
