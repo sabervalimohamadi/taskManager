@@ -6,6 +6,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { WsJwtGuard } from '../common/guards/ws-jwt.guard';
 import { UsersService } from '../users/users.service';
 
 @WebSocketGateway({ cors: { origin: '*' } })
@@ -16,17 +17,22 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   private readonly logger = new Logger(NotificationsGateway.name);
   private readonly userSocketMap = new Map<string, string>();
 
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly wsJwtGuard: WsJwtGuard,
+    private readonly usersService: UsersService,
+  ) {}
 
   handleConnection(client: Socket): void {
-    const userId = client.handshake.query.userId as string;
-    if (!userId) {
-      client.disconnect();
-      return;
+    try {
+      this.wsJwtGuard.validateClient(client);
+      const userId = client.data.userId as string;
+      this.userSocketMap.set(userId, client.id);
+      client.join(userId);
+      this.logger.log(`User ${userId} connected (socket ${client.id})`);
+    } catch {
+      client.emit('error', { message: 'Unauthorized' });
+      client.disconnect(true);
     }
-    this.userSocketMap.set(userId, client.id);
-    client.join(userId);
-    this.logger.log(`[Gateway] User ${userId} connected`);
   }
 
   handleDisconnect(client: Socket): void {
@@ -39,7 +45,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
     }
     if (disconnectedUserId) {
       this.userSocketMap.delete(disconnectedUserId);
-      this.logger.log(`[Gateway] User ${disconnectedUserId} disconnected`);
+      this.logger.log(`User ${disconnectedUserId} disconnected`);
     }
   }
 
