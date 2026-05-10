@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { RedisIoAdapter } from './gateway/redis-io.adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -15,6 +16,12 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+
+  const redisHost = process.env.REDIS_HOST ?? 'localhost';
+  const redisPort = parseInt(process.env.REDIS_PORT ?? '6379', 10);
+  const redisAdapter = new RedisIoAdapter(app);
+  await redisAdapter.connectToRedis(redisHost, redisPort);
+  app.useWebSocketAdapter(redisAdapter);
 
   const config = new DocumentBuilder()
     .setTitle('Task Management API')

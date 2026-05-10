@@ -15,7 +15,6 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   server: Server;
 
   private readonly logger = new Logger(NotificationsGateway.name);
-  private readonly userSocketMap = new Map<string, string>();
 
   constructor(
     private readonly wsJwtGuard: WsJwtGuard,
@@ -26,7 +25,6 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
     try {
       this.wsJwtGuard.validateClient(client);
       const userId = client.data.userId as string;
-      this.userSocketMap.set(userId, client.id);
       client.join(userId);
       this.logger.log(`User ${userId} connected (socket ${client.id})`);
     } catch {
@@ -36,16 +34,9 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   }
 
   handleDisconnect(client: Socket): void {
-    let disconnectedUserId: string | undefined;
-    for (const [userId, socketId] of this.userSocketMap.entries()) {
-      if (socketId === client.id) {
-        disconnectedUserId = userId;
-        break;
-      }
-    }
-    if (disconnectedUserId) {
-      this.userSocketMap.delete(disconnectedUserId);
-      this.logger.log(`User ${disconnectedUserId} disconnected`);
+    const userId = client.data.userId as string | undefined;
+    if (userId) {
+      this.logger.log(`User ${userId} disconnected (socket ${client.id})`);
     }
   }
 
