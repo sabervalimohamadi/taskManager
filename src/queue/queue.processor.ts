@@ -1,27 +1,23 @@
-import {
-  OnQueueCompleted,
-  OnQueueFailed,
-  Process,
-  Processor,
-} from '@nestjs/bull';
+import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import type { Job } from 'bull';
+import { Job } from 'bullmq';
 import { Model } from 'mongoose';
 import { NotificationsGateway } from '../gateway/notifications.gateway';
 import { Task, TaskDocument } from '../tasks/schemas/task.schema';
 
 @Processor('task-deadlines')
-export class QueueProcessor {
+export class QueueProcessor extends WorkerHost {
   private readonly logger = new Logger(QueueProcessor.name);
 
   constructor(
     @InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>,
     private readonly notificationsGateway: NotificationsGateway,
-  ) {}
+  ) {
+    super();
+  }
 
-  @Process()
-  async handleDeadlineReminder(job: Job<{ taskId: string }>): Promise<void> {
+  async process(job: Job<{ taskId: string }>): Promise<void> {
     const { taskId } = job.data;
 
     const task = await this.taskModel
@@ -48,7 +44,7 @@ export class QueueProcessor {
     }
   }
 
-  @OnQueueFailed()
+  @OnWorkerEvent('failed')
   onFailed(job: Job<{ taskId: string }>, error: Error): void {
     this.logger.error({
       jobId: job.id,
@@ -58,7 +54,7 @@ export class QueueProcessor {
     });
   }
 
-  @OnQueueCompleted()
+  @OnWorkerEvent('completed')
   onCompleted(job: Job<{ taskId: string }>): void {
     this.logger.log({ jobId: job.id, taskId: job.data.taskId });
   }

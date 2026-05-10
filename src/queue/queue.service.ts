@@ -1,6 +1,6 @@
-import { InjectQueue } from '@nestjs/bull';
+import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
-import type { Queue } from 'bull';
+import { Queue } from 'bullmq';
 import { TaskDocument } from '../tasks/schemas/task.schema';
 
 @Injectable()
@@ -22,6 +22,7 @@ export class QueueService {
     }
 
     await this.deadlineQueue.add(
+      'deadline-reminder',
       { taskId: task._id.toString() },
       {
         jobId: `deadline-${task._id}`,
