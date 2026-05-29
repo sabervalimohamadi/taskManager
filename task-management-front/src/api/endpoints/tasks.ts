@@ -1,21 +1,29 @@
-import apiClient from '@/api/client'
-import type { Task } from '@/types'
+import client from '@/api/client'
+import type { Task, PaginatedResponse } from '@/types'
 
-export interface CreateTaskDto {
-  title: string
-  description?: string
-  priority?: Task['priority']
-  dueDate?: string
-}
-
-export interface UpdateTaskDto extends Partial<CreateTaskDto> {
-  status?: Task['status']
+export interface TaskFilters {
+  page?: number
+  limit?: number
+  status?: string
+  priority?: string
+  search?: string
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
 }
 
 export const tasksApi = {
-  getAll: () => apiClient.get<Task[]>('/tasks'),
-  getOne: (id: string) => apiClient.get<Task>(`/tasks/${id}`),
-  create: (dto: CreateTaskDto) => apiClient.post<Task>('/tasks', dto),
-  update: (id: string, dto: UpdateTaskDto) => apiClient.patch<Task>(`/tasks/${id}`, dto),
-  remove: (id: string) => apiClient.delete(`/tasks/${id}`),
+  getAll: (filters: TaskFilters) =>
+    client.get<PaginatedResponse<Task>>('/tasks', { params: filters }),
+
+  getOne: (id: string) =>
+    client.get<Task>(`/tasks/${id}`),
+
+  create: (dto: Partial<Task>) =>
+    client.post<Task>('/tasks', dto),
+
+  update: (id: string, dto: Partial<Task> & { expectedVersion: number }) =>
+    client.patch<Task>(`/tasks/${id}`, dto),
+
+  remove: (id: string) =>
+    client.delete(`/tasks/${id}`),
 }

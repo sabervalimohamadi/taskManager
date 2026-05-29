@@ -75,3 +75,4 @@
 | # | Task | Description |
 |---|------|-------------|
 | FE-1 | `feat(web): scaffold + auth UI` | Vite + Vue3 + TS, TailwindCSS v4 with brand #a72b77, Axios client with JWT interceptor + refresh rotation, Pinia auth store (persisted), Vue Router v4 with auth navigation guard, LoginPage with VeeValidate+Zod, reusable UI components (AppButton, AppInput, AppCard, AppSpinner), folder: `task-management-front/` |
+| FE-2 | `feat(web): dashboard + task list` | TanStack Query for server state, debounced search + status/priority/sort filters, responsive TaskTable (desktop) + TaskCard (mobile), skeleton loading, TaskPagination, Create/Edit modals with VeeValidate+Zod, optimistic conflict (409) handling, Pinia task store for modal state, stat summary cards |

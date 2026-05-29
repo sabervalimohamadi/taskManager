@@ -8,15 +8,24 @@ export type TaskStatus = 'todo' | 'in_progress' | 'done'
 export type TaskPriority = 'low' | 'medium' | 'high'
 
 export interface Task {
-  id: string
+  _id: string
   title: string
   description?: string
   status: TaskStatus
   priority: TaskPriority
-  assignedTo?: User
-  dueDate?: string
+  assignedTo?: { _id: string; email: string }
+  deadline?: string
+  version: number
   createdAt: string
   updatedAt: string
+}
+
+export interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
 }
 
 export interface LoginCredentials {
